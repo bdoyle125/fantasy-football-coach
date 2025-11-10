@@ -27,6 +27,8 @@ class Server {
 
     private configureRoutes() {
         this.app.get('/', (req: Request, res: Response) => {
+            console.log('LeagueID:', process.env.SLEEPER_LEAGUE_ID);
+            console.log('OwnerID:', process.env.SLEEPER_OWNER_ID);
             res.send('Fantasy Football Coach API is running');
         });
 
@@ -48,7 +50,10 @@ class Server {
 
         this.app.post('/api/myteam', async (req: Request, res: Response) => {
             try {
-                const myPlayers = await getTeamForOwner(Number(process.env.LEAGUE_ID), Number(process.env.OWNER_ID));
+                if (!process.env.SLEEPER_LEAGUE_ID || !process.env.SLEEPER_OWNER_ID) {
+                    return res.status(400).json({ error: 'Missing Sleeper league or owner ID in environment variables' });
+                }
+                const myPlayers = await getTeamForOwner(process.env.SLEEPER_LEAGUE_ID, process.env.SLEEPER_OWNER_ID);
                 res.json({ players: myPlayers });
             } catch (error) {
                 console.error('Error fetching team data:', error);
