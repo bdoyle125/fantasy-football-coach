@@ -30,10 +30,10 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
     const myPlayers = playerIds.map((pid: number) => {
         const p = playersData[pid];
         return {
-        id: pid,
-        name: p ? p.full_name : "Unknown",
-        team: p ? p.team : null,
-        position: p ? p.position : null
+            id: pid,
+            name: p ? p.full_name : "Unknown",
+            team: p ? p.team : null,
+            position: p ? p.position : null
         };
     });
 
