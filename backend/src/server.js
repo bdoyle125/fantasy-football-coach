@@ -46,7 +46,10 @@ class Server {
         });
         this.app.post('/api/myteam', async (req, res) => {
             try {
-                const myPlayers = await (0, getTeamForOwner_1.getTeamForOwner)(Number(process.env.LEAGUE_ID), Number(process.env.OWNER_ID));
+                if (!process.env.SLEEPER_LEAGUE_ID || !process.env.SLEEPER_OWNER_ID) {
+                    return res.status(400).json({ error: 'Missing Sleeper league or owner ID in environment variables' });
+                }
+                const myPlayers = await (0, getTeamForOwner_1.getTeamForOwner)(process.env.SLEEPER_LEAGUE_ID, process.env.SLEEPER_OWNER_ID);
                 res.json({ players: myPlayers });
             }
             catch (error) {

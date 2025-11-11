@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "fantasy-football-coach",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

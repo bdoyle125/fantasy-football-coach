@@ -1,2 +1,2 @@
-export declare function getTeamForOwner(leagueId: number, ownerId: number): Promise<any>;
+export declare function getTeamForOwner(leagueId: string, ownerId: string): Promise<any>;
 //# sourceMappingURL=getTeamForOwner.d.ts.map

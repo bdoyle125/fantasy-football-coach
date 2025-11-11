@@ -9,22 +9,17 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
     }
 
     // find the roster for your owner
-    console.log('Total rosters fetched:', rosters.length);
     const myRoster = rosters.find((r: { owner_id: string }) => r.owner_id === ownerId);
-    console.log('Matched roster:', myRoster);
     if (!myRoster) {
         console.error("Roster not found for owner:", ownerId);
         throw new Error("Roster not found for owner");
     }
 
     const playerIds = myRoster.players;  // array of player_id strings
-    console.log('Player IDs:', playerIds);
 
     // fetch player meta-info
-    console.log('Fetching player meta-info from Sleeper API');
     const playersRes = await fetch(`https://api.sleeper.app/v1/players/nfl`);
     const playersData = await playersRes.json();
-    console.log('Total players fetched:', Object.keys(playersData).length);
 
     // map your players
     const myPlayers = playerIds.map((pid: number) => {
@@ -33,10 +28,21 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
             id: pid,
             name: p ? p.full_name : "Unknown",
             team: p ? p.team : null,
-            position: p ? p.position : null
+            position: p ? p.position : null,
+            stats: null, // to be filled later
         };
     });
 
-    console.log('Mapped players:', myPlayers);
+    for (const player of myPlayers) {
+        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=2025`); // TODO: make season dynamic
+        if (!stats.ok) {
+            console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
+            player.stats = null;
+            continue;
+        }
+        const statsData = await stats.json();
+        player.stats = statsData;
+    }
+
     return myPlayers;
 }
