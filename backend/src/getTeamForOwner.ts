@@ -1,4 +1,7 @@
-export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<any> {
+import { Player } from "./types/Player";
+import { Stats } from "./types/Stats";
+
+export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Player[]> {
     // fetch rosters
     const res = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters`);
     const rosters = await res.json();
@@ -22,26 +25,26 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
     const playersData = await playersRes.json();
 
     // map your players
-    const myPlayers = playerIds.map((pid: number) => {
+    const myPlayers: Player[] = playerIds.map((pid: string) => {
         const p = playersData[pid];
-        return {
-            id: pid,
-            name: p ? p.full_name : "Unknown",
-            team: p ? p.team : null,
-            position: p ? p.position : null,
-            stats: null, // to be filled later
-        };
+        return new Player(
+            pid,
+            p ? p.full_name : "Unknown",
+            p ? p.team : null,
+            p ? p.position : null,
+            new Stats({}) // Initialize with empty stats, will be updated later
+        );
     });
 
     for (const player of myPlayers) {
         const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=2025`); // TODO: make season dynamic
         if (!stats.ok) {
             console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
-            player.stats = null;
+            player.stats = new Stats({}); // Assign empty stats on failure
             continue;
         }
         const statsData = await stats.json();
-        player.stats = statsData;
+        player.stats = new Stats(statsData.stats);
     }
 
     return myPlayers;
