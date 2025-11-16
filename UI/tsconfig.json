@@ -1,4 +1,11 @@
 {
+  "compilerOptions": {
+    "rootDir": "../", // Set rootDir to project root to include shared/types
+    "outDir": "./dist",
+    "paths": {
+      "@/*": ["../../*"]
+    },
+  },
   "files": [],
   "references": [
     {

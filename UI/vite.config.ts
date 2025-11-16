@@ -15,13 +15,21 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-    build: {
-      rollupOptions: {
-        output: {
-          entryFileNames: 'js/[name].js',
-          chunkFileNames: 'js/[name].js',
-          assetFileNames: 'assets/[name].[ext]'
-        }
-      }
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'js/[name].js',
+        chunkFileNames: 'js/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
+      }
+    }
+  },
 })

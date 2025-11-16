@@ -2,8 +2,11 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
+    "rootDir": "../", // Set rootDir to project root to include shared/types
     "outDir": "./dist",
+    "paths": {
+      "@/*": ["../*"]
+    },
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module

@@ -1,5 +1,5 @@
-import { Player } from "./types/Player";
-import { Stats } from "./types/Stats";
+import { Player } from "../../shared/types/Player";
+import { Stats } from "../../shared/types/Stats";
 
 export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Player[]> {
     // fetch rosters
