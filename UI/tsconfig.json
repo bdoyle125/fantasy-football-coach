@@ -5,6 +5,8 @@
     "paths": {
       "@/*": ["../../*"]
     },
+    "target": "esnext",
+    "module": "es2020"
   },
   "files": [],
   "references": [
