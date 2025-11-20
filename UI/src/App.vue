@@ -43,8 +43,12 @@
       };
     },
     async mounted() {
-      this.myteam = await this.TeamService.fetchMyTeam();
+      try {
+        this.myteam = await this.TeamService.fetchMyTeam();
       console.log(this.myteam);
+      } catch (error) {
+        console.error("Error loading team:", error);
+      }
     }
   });
 </script>
