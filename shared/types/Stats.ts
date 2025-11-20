@@ -67,7 +67,7 @@ export class Stats {
         this.teamSpecialTeamsSnaps = data.tm_st_snp;
         this.bonusRushingReceivingYards100 = data.bonus_rush_rec_yd_100;
         this.receptions = data.rec;
-        this.receivingYards = data.rec_yar;
+        this.receivingYards = data.rec_yd;
         this.receptionsFirstDown = data.rec_fd;
         this.receptions5To9Yards = data.rec_5_9;
         this.gamesStarted = data.gs;
