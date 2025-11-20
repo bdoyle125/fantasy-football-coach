@@ -1,7 +1,7 @@
 import { Player } from "../../../backend/types/Player.js";
 
 export class TeamService {
-
+ 
     async fetchMyTeam(): Promise<Player[]> {
         const api = import.meta.env.VITE_API_URL || '';
         console.log('Using API URL:', api);
