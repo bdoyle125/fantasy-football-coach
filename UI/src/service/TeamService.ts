@@ -1,4 +1,4 @@
-import { Player } from "../../../backend/types/Player";
+import { Player } from "../../../backend/types/Player.js";
 
 export class TeamService {
 
