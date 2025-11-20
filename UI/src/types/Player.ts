@@ -1,4 +1,4 @@
-import { Stats } from "./Stats";
+import { Stats } from "./Stats.js";
 
 export class Player {
     id: string;
