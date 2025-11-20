@@ -2,7 +2,7 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "../", // Set rootDir to project root to include shared/types
+    "rootDir": ".", // Set rootDir to backend folder for Render compatibility
     "outDir": "./dist",
     "paths": {
       "@/*": ["../*"]
