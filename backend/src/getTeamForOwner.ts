@@ -36,16 +36,18 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
         );
     });
 
-    for (const player of myPlayers) {
-        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=${new Date().getFullYear()}`); // Season is now dynamic
+    // Fetch all player stats in parallel. This improves performance significantly.
+    const statsPromises = myPlayers.map(async (player) => {
+        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=${new Date().getFullYear()}`);
         if (!stats.ok) {
             console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
             player.stats = new Stats({}); // Assign empty stats on failure
-            continue;
+            return;
         }
         const statsData = await stats.json();
         player.stats = new Stats(statsData.stats);
-    }
+    });
+    await Promise.all(statsPromises);
 
     return myPlayers;
 }
