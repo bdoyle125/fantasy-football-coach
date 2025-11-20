@@ -48,7 +48,7 @@ class Server {
             }
         });
 
-        this.app.post('/api/myteam', async (req: Request, res: Response) => {
+        this.app.get('/api/myteam', async (req: Request, res: Response) => {
             try {
                 if (!process.env.SLEEPER_LEAGUE_ID || !process.env.SLEEPER_OWNER_ID) {
                     return res.status(400).json({ error: 'Missing Sleeper league or owner ID in environment variables' });
