@@ -78,4 +78,7 @@
 </script>
 
 <style scoped>
+  p {
+    white-space: pre-wrap;
+  }
 </style>
