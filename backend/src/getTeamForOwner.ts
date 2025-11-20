@@ -37,7 +37,7 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
     });
 
     for (const player of myPlayers) {
-        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=2025`); // TODO: make season dynamic
+        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=${new Date().getFullYear()}`); // Season is now dynamic
         if (!stats.ok) {
             console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
             player.stats = new Stats({}); // Assign empty stats on failure
