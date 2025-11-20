@@ -2,7 +2,7 @@ import express, { type Request, type Response, type Application } from 'express'
 import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
-import { getTeamForOwner } from './getTeamForOwner';
+import { getTeamForOwner } from './service-functions/getTeamForOwner';
 
 dotenv.config();
 
@@ -59,6 +59,31 @@ class Server {
             } catch (error) {
                 console.error('Error fetching team data:', error);
                 res.status(500).json({ error: 'Error fetching team data' });
+            }
+        });
+
+        this.app.post('/api/analyze-team', async (req: Request, response: Response) => {
+            try {
+                // Deserialize players from request body
+                const players = req.body.players;
+                if (!players || !Array.isArray(players)) {
+                    return response.status(500).json({ error: 'Invalid players data' });
+                }
+                const playerDescriptions = players.map((p: any) => {
+                    return `${p.name} (${p.position || 'Unknown Position'}) from ${p.team || 'Unknown Team'} with stats: ${JSON.stringify(p.stats)}`;
+                }).join('\n');
+
+                const prompt = `Analyze the following fantasy football players and provide suggestions for improving the team:\n\n${playerDescriptions}\n\nProvide specific recommendations.`;
+                const aiResponse = await this.openAiClient.chat.completions.create({
+                    model: 'gpt-5-mini',
+                    messages: [{ role: 'user', content: prompt }],
+                });
+                if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
+                    return response.status(500).json({ error: 'No valid response from OpenAI API' });
+                }
+                response.json({ analysis: aiResponse.choices[0].message.content });
+            } catch (error) {
+                response.status(400).json({ error: 'Error analyzing team' });
             }
         });
 

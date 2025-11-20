@@ -18,6 +18,17 @@
       </tbody>
     </table>
     <p v-else>No players found.</p>
+
+    <button 
+      v-if="myteam.length"
+      @click="analyzeTeam"
+    >
+      Analyze Team
+    </button>
+    <div v-if="analysis">
+      <h2>Team Analysis</h2>
+      <p>{{ analysis }}</p>
+    </div>
   </div>
 </template>
 
@@ -28,6 +39,7 @@
 
   interface componentData {
     myteam: Player[];
+    analysis: string;
   }
 
   export default defineComponent({
@@ -39,19 +51,34 @@
     },
     data(): componentData {
       return {
-        myteam: []
+        myteam: [],
+        analysis: ''
       };
     },
-    async mounted() {
-      try {
-        this.myteam = await this.TeamService.fetchMyTeam();
-      console.log(this.myteam);
-      } catch (error) {
-        console.error("Error loading team:", error);
+    methods: {
+      async analyzeTeam() {
+        try {
+          this.analysis = await this.TeamService.analyzeTeam(this.myteam);
+        } catch (error) {
+          console.error("Error analyzing team:", error);
+        }
+      },
+      async getTeam() {
+        try {
+          this.myteam = await this.TeamService.fetchMyTeam();
+        } catch (error) {
+          console.error("Error loading team:", error);
+        }
       }
+    },
+    async mounted() {
+      await this.getTeam();
     }
   });
 </script>
 
 <style scoped>
+  p {
+    white-space: pre-wrap;
+  }
 </style>
