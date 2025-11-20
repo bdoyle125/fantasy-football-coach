@@ -3,7 +3,9 @@ import { Player } from "../../../backend/types/Player";
 export class TeamService {
 
     async fetchMyTeam(): Promise<Player[]> {
-        const response = await fetch('/api/myteam', {
+        const api = import.meta.env.VITE_API_URL || ''; // TODO: Resolve env variable issue
+        console.log('Using API URL:', api);
+        const response = await fetch(`${api}/api/myteam`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
