@@ -27,8 +27,9 @@ class Server {
 
     private configureRoutes() {
         this.app.get('/', (req: Request, res: Response) => {
-            console.log('LeagueID:', process.env.SLEEPER_LEAGUE_ID);
-            console.log('OwnerID:', process.env.SLEEPER_OWNER_ID);
+            if (!process.env.SLEEPER_LEAGUE_ID || !process.env.SLEEPER_OWNER_ID) {
+                console.log('Sleeper League ID or Owner ID not set in environment variables.');
+            }
             res.send('Fantasy Football Coach API is running');
         });
 
