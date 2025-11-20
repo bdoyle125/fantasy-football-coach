@@ -4,7 +4,7 @@ export class TeamService {
 
     async fetchMyTeam(): Promise<Player[]> {
         const response = await fetch('/api/myteam', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
