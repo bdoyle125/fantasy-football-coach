@@ -24,7 +24,7 @@
 <script lang="ts">
   import { defineComponent } from "vue";
   import { TeamService } from "./service/TeamService";
-  import { Player } from "../../shared/types/Player";
+  import { Player } from "../../backend/types/Player";
 
   interface componentData {
     myteam: Player[];
