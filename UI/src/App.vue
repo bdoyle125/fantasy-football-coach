@@ -1,5 +1,5 @@
 <template>
-  <TeamList />
+  <router-view />
 </template>
 
 <script lang="ts">
@@ -12,7 +12,4 @@
 </script>
 
 <style scoped>
-  p {
-    white-space: pre-wrap;
-  }
 </style>

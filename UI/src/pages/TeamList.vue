@@ -11,7 +11,7 @@
       </thead>
       <tbody>
         <tr v-for="player in myteam" :key="player.id">
-          <td>{{ player.name }}</td>
+          <td @click="navigateToPlayerCard(player.id)">{{ player.name }}</td>
           <td>{{ player.position }}</td>
           <td>{{ player.team }}</td>
         </tr>
@@ -34,8 +34,9 @@
 
 <script lang="ts">
     import { defineComponent } from "vue";
+    import { useRouter } from "vue-router";
     import { TeamService } from "../service/TeamService";
-    import { Player } from "../../../backend/types/Player";
+    import { Player } from "../types/Player";
     
     interface componentData {
         myteam: Player[];
@@ -45,31 +46,36 @@
     export default defineComponent({
         name: "TeamList",
         setup() {
-        return {
-            TeamService: new TeamService()
-        }
+            return {
+                TeamService: new TeamService(),
+                router: useRouter(),
+            }
         },
         data(): componentData {
-        return {
-            myteam: [],
-            analysis: ''
-        };
+            return {
+                myteam: [],
+                analysis: ''
+            };
         },
         methods: {
-        async analyzeTeam() {
-            try {
-            this.analysis = await this.TeamService.analyzeTeam(this.myteam);
-            } catch (error) {
-            console.error("Error analyzing team:", error);
+            async analyzeTeam() {
+                try {
+                    this.analysis = await this.TeamService.analyzeTeam(this.myteam);
+                } catch (error) {
+                    console.error("Error analyzing team:", error);
+                }
+            },
+            async getTeam() {
+                try {
+                    this.myteam = await this.TeamService.fetchMyTeam();
+                } catch (error) {
+                    console.error("Error loading team:", error);
+                }
+            },
+            navigateToPlayerCard(playerId: string) {
+                console.log('Navigating to player with ID:', playerId);
+                this.router.push({ name: 'PlayerCard', params: { playerId: playerId } });
             }
-        },
-        async getTeam() {
-            try {
-            this.myteam = await this.TeamService.fetchMyTeam();
-            } catch (error) {
-            console.error("Error loading team:", error);
-            }
-        }
         },
         async mounted() {
             await this.getTeam();
