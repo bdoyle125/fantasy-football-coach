@@ -7,10 +7,10 @@
       <p>Position: {{ player.position }}</p>
       <h3>Statistics:</h3>
       <ul>
+        <!-- TODO: Divy up which stats to show based on player position -->
         <li v-for="(value, key) in player.stats" :key="key">
-          {{ key }}: {{ value }}
+          {{ key }}: {{ value ?? 'N/A' }}
         </li>
-        <!-- Add more stats as needed -->
       </ul>
     </div>
     <div v-else>
