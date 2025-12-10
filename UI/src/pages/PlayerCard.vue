@@ -23,7 +23,7 @@
     methods: {
       async getPlayerDetails() {
         // Method to fetch and display player details using this.playerId
-        const playerDetails = await this.PlayerService.fetchPlayerStats(this.playerId as string);
+        const playerDetails = await this.PlayerService.fetchPlayerDetails(this.playerId as string);
         console.log(playerDetails);
       }
     },

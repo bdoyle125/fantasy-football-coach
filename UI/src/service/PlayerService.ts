@@ -1,19 +1,29 @@
-import { PlayerStats } from "@/types/Stats.js";
+import { Player } from "@/types/Player.js";
 
 export class PlayerService {
 
-    async fetchPlayerStats(playerId: string): Promise<PlayerStats> {
+    async fetchPlayerDetails(playerId: string): Promise<Player> {
         const api = import.meta.env.VITE_API_URL || '';
-        const response = await fetch(`${api}api/stats/${playerId}`, {
+        const response = await fetch(`${api}api/player/${playerId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch player stats');
+            throw new Error('Failed to fetch player details');
         }
         const data = await response.json();
-        return data.stats;
+        const playerData = data.playerData;
+
+        // Return a Player instance
+        return new Player(
+            playerData.player_id,
+            playerData.player.first_name + ' ' + playerData.player.last_name,
+            playerData.team,
+            playerData.player.position,
+            playerData.stats
+        );
+
     }
 }
