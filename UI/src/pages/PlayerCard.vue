@@ -7,14 +7,9 @@
       <p>Position: {{ player.position }}</p>
       <h3>Statistics:</h3>
       <ul>
-        <li>Games Played: {{ player.stats.gamesPlayed }}</li>
-        <li>Receptions: {{ player.stats.receptions }}</li>
-        <li>Receiving Yards: {{ player.stats.receivingYards }}</li>
-        <li>Receiving Touchdowns: {{ player.stats.receivingTouchdowns }}</li>
-        <!-- <li>Rushing Yards: {{ player.stats.rushingYards }}</li>
-        <li>Rushing Touchdowns: {{ player.stats.rushingTouchdowns }}</li>
-        <li>Passing Yards: {{ player.stats.passingYards }}</li>
-        <li>Passing Touchdowns: {{ player.stats.passingTouchdowns }}</li> -->
+        <li v-for="(value, key) in player.stats" :key="key">
+          {{ key }}: {{ value }}
+        </li>
         <!-- Add more stats as needed -->
       </ul>
     </div>
