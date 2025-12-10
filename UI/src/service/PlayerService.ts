@@ -1,4 +1,5 @@
 import { Player } from "@/types/Player.js";
+import { PlayerStats } from "@/types/Stats.js";
 
 export class PlayerService {
 
@@ -16,13 +17,15 @@ export class PlayerService {
         const data = await response.json();
         const playerData = data.playerData;
 
+        const playerStats = new PlayerStats(playerData.stats);
+
         // Return a Player instance
         return new Player(
             playerData.player_id,
             playerData.player.first_name + ' ' + playerData.player.last_name,
             playerData.team,
             playerData.player.position,
-            playerData.stats
+            playerStats
         );
 
     }
