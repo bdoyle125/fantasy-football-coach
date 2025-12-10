@@ -62,6 +62,20 @@ class Server {
             }
         });
 
+        this.app.get('/api/stats/:playerId', async (req: Request, res: Response) => {
+            try {
+                const playerId = req.params.playerId;
+                const statsResponse = await fetch(`https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${new Date().getFullYear()}`);
+                if (!statsResponse.ok) {
+                    return res.status(500).json({ error: 'Failed to fetch player stats from Sleeper API' });
+                }
+                const statsData = await statsResponse.json();
+                res.json({ stats: statsData.stats });
+            } catch (error) {
+                return res.status(500).json({ error: 'Exception occurred while fetching player stats from Sleeper API' });
+            }
+        });
+
         this.app.post('/api/analyze-team', async (req: Request, response: Response) => {
             try {
                 // Deserialize players from request body

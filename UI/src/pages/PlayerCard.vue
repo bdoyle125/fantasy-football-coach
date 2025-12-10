@@ -6,19 +6,29 @@
 </template>
 
 <script lang="ts">
+  import { PlayerService } from '@/service/PlayerService';
   import { defineComponent } from 'vue';
-import { useRoute } from 'vue-router';
+  import { useRoute } from 'vue-router';
+  
   export default defineComponent({
     name: "PlayerCard",
     setup() {
         const route = useRoute();
         return {
             route,
-            playerId: route.params.playerId
+            playerId: route.params.playerId,
+            PlayerService: new PlayerService(),
         }
     },
-    mounted() {
-        console.log("Player ID:", this.playerId);
+    methods: {
+      async getPlayerDetails() {
+        // Method to fetch and display player details using this.playerId
+        const playerDetails = await this.PlayerService.fetchPlayerStats(this.playerId as string);
+        console.log(playerDetails);
+      }
+    },
+    async mounted() {
+      await this.getPlayerDetails();
     }
   });
 </script>

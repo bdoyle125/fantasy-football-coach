@@ -1,4 +1,4 @@
-export class Stats {
+export class PlayerStats {
     bonusReceptionsTightEnd: number;
     receptionsDropped: number;
     bonusReceivingYards100: number;
