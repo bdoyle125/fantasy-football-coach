@@ -1,5 +1,11 @@
 import { Player } from "@/types/Player.js";
-import { PlayerStats } from "@/types/Stats.js";
+import { DefenseSpecialTeamsStats } from "@/types/PlayerStats/DefenseSpecialTeamsStats.js";
+import { KickerStats } from "@/types/PlayerStats/KickerStats.js";
+import { PlayerStats } from "@/types/PlayerStats/PlayerStats.js";
+import { QuarterbackStats } from "@/types/PlayerStats/QuarterbackStats.js";
+import { RunningBackStats } from "@/types/PlayerStats/RunningBackStats.js";
+import { TightEndStats } from "@/types/PlayerStats/TightEndStats.js";
+import { WideReceiverStats } from "@/types/PlayerStats/WideReceiverStats.js";
 
 export class PlayerService {
 
@@ -17,7 +23,33 @@ export class PlayerService {
         const data = await response.json();
         const playerData = data.playerData;
 
-        const playerStats = new PlayerStats(playerData.stats);
+        // Assuming playerStats is part of the response
+        const position = playerData.player.position;
+        let playerStats: PlayerStats;
+        switch (position) {
+            case 'QB':
+                playerStats = new QuarterbackStats(playerData.stats);
+                break;
+            case 'RB':
+                playerStats = new RunningBackStats(playerData.stats);
+                break;
+            case 'WR':
+                playerStats = new WideReceiverStats(playerData.stats);
+                break;
+            case 'TE':
+                playerStats = new TightEndStats(playerData.stats);
+                break;
+            case 'K':
+                playerStats = new KickerStats(playerData.stats);
+                break;
+            case 'DEF':
+                playerStats = new DefenseSpecialTeamsStats(playerData.stats);
+                break;
+            default:
+                playerStats = new PlayerStats(playerData.stats);
+        }
+
+        console.log('Constructed player stats:', playerStats);
 
         // Return a Player instance
         return new Player(

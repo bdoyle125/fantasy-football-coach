@@ -1,5 +1,4 @@
 import { Player } from "../../types/Player";
-import { Stats } from "../../types/Stats";
 
 export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Player[]> {
     // fetch rosters
@@ -32,22 +31,9 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
             p ? p.full_name : "Unknown",
             p ? p.team : null,
             p ? p.position : null,
-            new Stats({}) // Initialize with empty stats, will be updated later
+            p ? p.stats : {}
         );
     });
-
-    // Fetch all player stats in parallel. This improves performance significantly.
-    const statsPromises = myPlayers.map(async (player) => {
-        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=${new Date().getFullYear()}`);
-        if (!stats.ok) {
-            console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
-            player.stats = new Stats({}); // Assign empty stats on failure
-            return;
-        }
-        const statsData = await stats.json();
-        player.stats = new Stats(statsData.stats);
-    });
-    await Promise.all(statsPromises);
 
     return myPlayers;
 }
