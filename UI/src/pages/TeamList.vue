@@ -1,23 +1,6 @@
 <template>
     <div>
     <h1>Your Team</h1>
-    <!-- <table v-if="myteam.length">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Position</th>
-          <th>Team</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="player in myteam" :key="player.id">
-          <td @click="navigateToPlayerCard(player.id)">{{ player.name }}</td>
-          <td>{{ player.position }}</td>
-          <td>{{ player.team }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-else>No players found.</p> -->
     <DataTable
         v-if="myteam.length"
         :value="myteam"
