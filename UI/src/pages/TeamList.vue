@@ -1,7 +1,7 @@
 <template>
     <div>
     <h1>Your Team</h1>
-    <table v-if="myteam.length">
+    <!-- <table v-if="myteam.length">
       <thead>
         <tr>
           <th>Name</th>
@@ -17,7 +17,36 @@
         </tr>
       </tbody>
     </table>
-    <p v-else>No players found.</p>
+    <p v-else>No players found.</p> -->
+    <DataTable
+        v-if="myteam.length"
+        :value="myteam"
+    >
+        <Column
+            field="name"
+            header="Name"
+            :sortable="true"
+            :filter="true"
+        >
+            <template #body="slotProps">
+                <a @click.prevent="navigateToPlayerCard(slotProps.data.id)">{{ slotProps.data.name }}</a>
+            </template>
+        </Column>
+        <Column
+            field="position"
+            header="Position"
+            :sortable="true"
+            :filter="true"
+        />
+        <Column
+            field="team"
+            header="Team"
+            :sortable="true"
+            :filter="true"
+        />
+        
+    </DataTable>
+        
 
     <button 
       v-if="myteam.length"
@@ -37,7 +66,9 @@
     import { useRouter } from "vue-router";
     import { TeamService } from "../service/TeamService";
     import { Player } from "../types/Player";
-    
+    import DataTable from 'primevue/datatable';
+    import Column from 'primevue/column';
+
     interface componentData {
         myteam: Player[];
         analysis: string;
@@ -45,6 +76,10 @@
     
     export default defineComponent({
         name: "TeamList",
+        components: {
+            DataTable,
+            Column,
+        },
         setup() {
             return {
                 TeamService: new TeamService(),
