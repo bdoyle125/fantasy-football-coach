@@ -4,8 +4,13 @@ import router from './router';
 import { createApp } from 'vue'
 import App from './App.vue'
 import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
 
 const app = createApp(App);
-app.use(PrimeVue as any); // Explicitly cast to bypass TypeScript error
+app.use(PrimeVue as any, {
+    theme: {
+        preset: Aura
+    }
+}); // Explicitly cast to bypass TypeScript error
 app.use(router);
 app.mount('#app');

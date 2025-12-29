@@ -31,12 +31,11 @@
     </DataTable>
         
 
-    <button 
+    <Button 
       v-if="myteam.length"
+      label="Analyze Team"
       @click="analyzeTeam"
-    >
-      Analyze Team
-    </button>
+    ></Button>
     <div v-if="analysis">
       <h2>Team Analysis</h2>
       <p>{{ analysis }}</p>
@@ -51,6 +50,7 @@
     import { Player } from "../types/Player";
     import DataTable from 'primevue/datatable';
     import Column from 'primevue/column';
+    import Button from 'primevue/button';
 
     interface componentData {
         myteam: Player[];
@@ -62,6 +62,7 @@
         components: {
             DataTable,
             Column,
+            Button
         },
         setup() {
             return {
