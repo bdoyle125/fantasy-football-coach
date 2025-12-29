@@ -67,7 +67,13 @@
             },
             async getTeam() {
                 try {
-                    this.myteam = await this.TeamService.fetchMyTeam();
+                    this.myteam = await this.TeamService.fetchMyTeam()
+
+                    // Sort my team by position
+                    const positionOrder = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
+                    this.myteam.sort((a, b) => {
+                        return positionOrder.indexOf(a.position) - positionOrder.indexOf(b.position);
+                    });
                 } catch (error) {
                     console.error("Error loading team:", error);
                 }
