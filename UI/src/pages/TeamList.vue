@@ -1,7 +1,7 @@
 <template>
-  <div class="p-4">
+  <div v-if="myteam?.players" class="p-4">
     <h1>{{ myteam?.name ?? "My Team" }} Roster </h1>
-    <DataTable v-if="myteam?.players" :value="myteam.players">
+    <DataTable :value="myteam.players">
       <Column field="name" header="Name" :sortable="true" :filter="true">
         <template #body="slotProps">
           <a @click.prevent="navigateToPlayerCard(slotProps.data.id)">{{ slotProps.data.name }}</a>
@@ -19,6 +19,11 @@
       <p>{{ analysis }}</p>
     </div>
   </div>
+ <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
+    <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
+      animationDuration="1s" aria-label="Loading" />
+    <span class="ms-3">Loading team details...</span>
+  </div>
 </template>
 
 <script lang="ts">
@@ -26,9 +31,7 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import { TeamService } from "../service/TeamService";
 import { Team } from "../types/Team";
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
+import { ProgressSpinner, DataTable, Column, Button } from "primevue";
 
 interface componentData {
   myteam: Team | null;
@@ -40,7 +43,8 @@ export default defineComponent({
   components: {
     DataTable,
     Column,
-    Button
+    Button,
+    ProgressSpinner
   },
   setup() {
     return {
