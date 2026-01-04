@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <h1>Player Card</h1>
+  <div class="p-4">
     <div v-if="player">
       <h2>{{ player.name }}</h2>
       <p>Team: {{ player.team }}</p>
@@ -51,6 +50,7 @@ export default defineComponent({
       // Method to fetch and display player details using this.playerId
       const playerDetails = await this.PlayerService.fetchPlayerDetails(this.playerId as string);
       this.player = playerDetails;
+      console.log("Fetched player details:", playerDetails);
     }
   },
   async mounted() {
