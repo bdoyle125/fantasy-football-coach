@@ -2,7 +2,8 @@
   <div class="container mt-4">
     <div v-if="player">
       <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
+          <Button as="RouterLink" :to="{ name: 'Home' }" class="mb-3" icon="pi pi-arrow-left" label="Back to Player List" />
           <Card class="mb-4 shadow-sm">
             <template #header>
               <div class="d-flex align-items-center gap-3">
@@ -19,12 +20,11 @@
               </div>
             </template>
             <template #content>
-              <h4 class="mt-3 mb-4">Statistics</h4>
               <div class="row g-3">
                 <div class="col-12 col-md-6">
                   <Card class="mb-3">
                     <template #header>
-                      <h5 class="mb-3">Base Stats</h5>
+                      <h5>Base Stats</h5>
                     </template>
                     <template #content>
                       <dl class="row mb-0">
@@ -39,7 +39,7 @@
                 <div class="col-12 col-md-6" v-if="Object.keys(extraStats(player.stats)).length">
                   <Card class="mb-3">
                     <template #header>
-                      <h5 class="mb-3">Additional Stats</h5>
+                      <h5>Additional Stats</h5>
                     </template>
                     <template #content>
                       <dl class="row mb-0">
@@ -68,7 +68,7 @@
 <script lang="ts">
 import { PlayerService } from '@/service/PlayerService';
 import { Player } from '@/types/Player';
-import { ProgressSpinner, Card } from 'primevue';
+import { ProgressSpinner, Card, Button } from 'primevue';
 import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -81,7 +81,8 @@ export default defineComponent({
   name: "PlayerCard",
   components: {
     ProgressSpinner,
-    Card
+    Card,
+    Button
   },
   data(): componentData {
     return {
