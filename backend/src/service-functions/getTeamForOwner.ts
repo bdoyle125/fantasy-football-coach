@@ -1,6 +1,22 @@
 import { Player } from "../../types/Player";
+import { Team } from "../../types/Team";
 
-export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Player[]> {
+export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Team> {
+    // get team information
+    const leagueRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users`);
+    const leagueUsers = await leagueRes.json();
+    if (!Array.isArray(leagueUsers)) {
+        console.error("Invalid league users data:", leagueUsers);
+        throw new Error("Invalid league users data");
+    }
+
+    const teamInformation = leagueUsers.find((u: { user_id: string }) => u.user_id === ownerId);
+    if (!teamInformation) {
+        console.error("User not found in league:", ownerId);
+        throw new Error("User not found in league");
+    }
+    const teamName = teamInformation.metadata?.team_name || "Unnamed Team";
+
     // fetch rosters
     const res = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters`);
     const rosters = await res.json();
@@ -36,5 +52,12 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
         );
     });
 
-    return myPlayers;
+    // Construct and return a Team instance
+    return new Team(
+        teamInformation.user_id,
+        teamName,
+        leagueId,
+        ownerId,
+        myPlayers
+    );
 }

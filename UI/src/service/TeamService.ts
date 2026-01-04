@@ -1,8 +1,8 @@
+import { Team } from "@/types/Team.js";
 import { Player } from "../../../backend/types/Player.js";
 
 export class TeamService {
- 
-    async fetchMyTeam(): Promise<Player[]> {
+    async fetchMyTeam(): Promise<Team> {
         const api = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${api}api/myteam`, {
             method: 'GET',
@@ -14,7 +14,7 @@ export class TeamService {
             throw new Error('Failed to fetch team data');
         }
         const data = await response.json();
-        return data.players;
+        return data;
     }
 
     async analyzeTeam(players: Player[]): Promise<string> {

@@ -3,7 +3,8 @@
     <div v-if="player">
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <Button as="RouterLink" :to="{ name: 'Home' }" class="mb-3" icon="pi pi-arrow-left" label="Back to Player List" />
+          <Button as="RouterLink" :to="{ name: 'Home' }" class="mb-3" icon="pi pi-arrow-left"
+            label="Back to Player List" />
           <Card class="mb-4 shadow-sm">
             <template #header>
               <div class="d-flex align-items-center gap-3">
@@ -152,11 +153,12 @@ export default defineComponent({
   justify-content: center;
   font-weight: bold;
 }
-  .stat-bullet {
-    color: var(--primary-color, #0d6efd);
-    font-size: 1.2em;
-    margin-right: 0.5em;
-    vertical-align: middle;
-    display: inline-block;
-  }
+
+.stat-bullet {
+  color: var(--primary-color, #0d6efd);
+  font-size: 1.2em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  display: inline-block;
+}
 </style>
