@@ -12,14 +12,13 @@
       <Column field="team" header="Team" :sortable="true" :filter="true" />
     </DataTable>
     <div class="d-flex justify-content-end mt-3">
-      <Button v-if="myteam?.players.length" label="Analyze Team" @click="analyzeTeam"></Button>
+      <Button v-if="myteam?.players.length" :loading="analysisInProgress" label="Analyze Team" @click="analyzeTeam" />
     </div>
-    <div v-if="analysis">
-      <h2>Team Analysis</h2>
+    <Dialog header="Team Analysis" v-model:visible="showAnalysisDialog" :modal="true" :closable="true" :style="{ width: '50vw' }">
       <p>{{ analysis }}</p>
-    </div>
+    </Dialog>
   </div>
- <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
+  <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
     <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
       animationDuration="1s" aria-label="Loading" />
     <span class="ms-3">Loading team details...</span>
@@ -31,11 +30,13 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import { TeamService } from "../service/TeamService";
 import { Team } from "../types/Team";
-import { ProgressSpinner, DataTable, Column, Button } from "primevue";
+import { ProgressSpinner, DataTable, Column, Button, Dialog } from "primevue";
 
 interface componentData {
   myteam: Team | null;
   analysis: string;
+  showAnalysisDialog: boolean;
+  analysisInProgress: boolean;
 }
 
 export default defineComponent({
@@ -44,7 +45,8 @@ export default defineComponent({
     DataTable,
     Column,
     Button,
-    ProgressSpinner
+    ProgressSpinner,
+    Dialog
   },
   setup() {
     return {
@@ -55,15 +57,22 @@ export default defineComponent({
   data(): componentData {
     return {
       myteam: null,
-      analysis: ''
+      analysis: '',
+      showAnalysisDialog: false,
+      analysisInProgress: false,
     };
   },
   methods: {
     async analyzeTeam() {
       try {
-        this.analysis = await this.TeamService.analyzeTeam(this.myteam);
+        // Show loading state
+        this.analysisInProgress = true;
+        this.analysis = await this.TeamService.analyzeTeam(this.myteam.players);
+        this.showAnalysisDialog = true;
       } catch (error) {
         console.error("Error analyzing team:", error);
+      } finally {
+        this.analysisInProgress = false;
       }
     },
     async getTeam() {
