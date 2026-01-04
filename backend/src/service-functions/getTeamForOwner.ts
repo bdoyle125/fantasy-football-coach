@@ -31,6 +31,7 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
             p ? p.full_name : "Unknown",
             p ? p.team : null,
             p ? p.position : null,
+            p ? p.age : null,
             p ? p.stats : {}
         );
     });

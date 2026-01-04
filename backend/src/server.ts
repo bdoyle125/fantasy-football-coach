@@ -65,7 +65,7 @@ class Server {
         this.app.get('/api/player/:playerId', async (req: Request, res: Response) => {
             try {
                 const playerId = req.params.playerId;
-                const playerResponse = await fetch(`https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${new Date().getFullYear()}`);
+                const playerResponse = await fetch(`https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${new Date().getFullYear()-1}`);
                 if (!playerResponse.ok) {
                     return res.status(500).json({ error: 'Failed to fetch player stats from Sleeper API' });
                 }

@@ -57,6 +57,7 @@ export class PlayerService {
             playerData.player.first_name + ' ' + playerData.player.last_name,
             playerData.team,
             playerData.player.position,
+            playerData.player.age,
             playerStats
         );
 

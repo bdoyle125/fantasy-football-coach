@@ -8,6 +8,7 @@
         </template>
       </Column>
       <Column field="position" header="Position" :sortable="true" :filter="true" />
+      <Column field="age" header="Age" :sortable="true" :filter="true" />
       <Column field="team" header="Team" :sortable="true" :filter="true" />
     </DataTable>
     <div class="d-flex justify-content-end mt-3">
