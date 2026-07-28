@@ -112,6 +112,36 @@ class Server {
       }
     });
 
+    this.app.post('/api/start-or-bench', async (req: Request, response: Response) => {
+      try {
+        const { player, roster } = req.body;
+        if (!player || !player.name) {
+          return response.status(400).json({ error: 'Invalid player data' });
+        }
+        if (!roster || !Array.isArray(roster)) {
+          return response.status(400).json({ error: 'Invalid roster data' });
+        }
+
+        const rosterDescriptions = roster.map((p: any) => {
+          return `${p.name} (${p.position || 'Unknown Position'}) from ${p.team || 'Unknown Team'} with stats: ${JSON.stringify(p.stats)}`;
+        }).join('\n');
+
+        const prompt = `You are a fantasy football coach. Here is the full roster:\n\n${rosterDescriptions}\n\nShould ${player.name} (${player.position || 'Unknown Position'}) be started or benched this week? Consider the depth at their position elsewhere on the roster. Respond with a clear "Start" or "Bench" verdict followed by a brief explanation.`;
+
+        const aiResponse = await this.openAiClient.chat.completions.create({
+          model: 'gpt-5-mini',
+          messages: [{ role: 'user', content: prompt }],
+        });
+
+        if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
+          return response.status(500).json({ error: 'No valid response from OpenAI API' });
+        }
+        response.json({ recommendation: aiResponse.choices[0].message.content });
+      } catch (error) {
+        response.status(500).json({ error: 'Error generating start/bench recommendation' });
+      }
+    });
+
   }
 
   public start(): void {

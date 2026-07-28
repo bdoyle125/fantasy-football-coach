@@ -3,8 +3,12 @@
     <div v-if="player">
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <Button as="RouterLink" :to="{ name: 'Home' }" class="mb-3" icon="pi pi-arrow-left"
-            label="Back to Player List" />
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <Button as="RouterLink" :to="{ name: 'Home' }" icon="pi pi-arrow-left"
+              label="Back to Player List" />
+            <Button v-if="myteam?.players?.length" :loading="startBenchInProgress" label="Start or Bench?"
+              @click="getStartOrBenchAdvice" />
+          </div>
           <Card class="mb-4 shadow-sm">
             <template #header>
               <div class="d-flex align-items-center gap-3">
@@ -57,6 +61,10 @@
           </Card>
         </div>
       </div>
+      <Dialog :header="`Start or Bench: ${player?.name}`" v-model:visible="showStartBenchDialog" :modal="true"
+        :closable="true" :style="{ width: '50vw' }">
+        <p>{{ startBenchRecommendation }}</p>
+      </Dialog>
     </div>
     <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
       <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
@@ -68,14 +76,20 @@
 
 <script lang="ts">
 import { PlayerService } from '@/service/PlayerService';
+import { TeamService } from '@/service/TeamService';
 import { Player } from '@/types/Player';
-import { ProgressSpinner, Card, Button } from 'primevue';
+import { Team } from '@/types/Team';
+import { ProgressSpinner, Card, Button, Dialog } from 'primevue';
 import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
 
 interface componentData {
   playerId: string | null;
   player: Player | null;
+  myteam: Team | null;
+  startBenchRecommendation: string;
+  showStartBenchDialog: boolean;
+  startBenchInProgress: boolean;
 }
 
 export default defineComponent({
@@ -83,12 +97,17 @@ export default defineComponent({
   components: {
     ProgressSpinner,
     Card,
-    Button
+    Button,
+    Dialog
   },
   data(): componentData {
     return {
       playerId: null,
-      player: null
+      player: null,
+      myteam: null,
+      startBenchRecommendation: '',
+      showStartBenchDialog: false,
+      startBenchInProgress: false
     }
   },
   setup() {
@@ -96,6 +115,7 @@ export default defineComponent({
     return {
       route,
       PlayerService: new PlayerService(),
+      TeamService: new TeamService(),
     }
   },
   computed: {
@@ -137,16 +157,38 @@ export default defineComponent({
       const playerDetails = await this.PlayerService.fetchPlayerDetails(this.playerId as string);
       this.player = playerDetails;
       console.log("Fetched player details:", playerDetails);
+    },
+    async getMyTeam() {
+      try {
+        this.myteam = await this.TeamService.fetchMyTeam();
+      } catch (error) {
+        console.error("Error loading team:", error);
+      }
+    },
+    async getStartOrBenchAdvice() {
+      try {
+        this.startBenchInProgress = true;
+        this.startBenchRecommendation = await this.TeamService.startOrBench(this.player as Player, this.myteam?.players ?? []);
+        this.showStartBenchDialog = true;
+      } catch (error) {
+        console.error("Error getting start/bench advice:", error);
+      } finally {
+        this.startBenchInProgress = false;
+      }
     }
   },
   async mounted() {
     this.playerId = this.route.params.playerId as string;
-    await this.getPlayerDetails();
+    await Promise.all([this.getPlayerDetails(), this.getMyTeam()]);
   }
 });
 </script>
 
 <style scoped>
+p {
+  white-space: pre-wrap;
+}
+
 .avatar {
   display: inline-flex;
   align-items: center;

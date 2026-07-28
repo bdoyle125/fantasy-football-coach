@@ -60,7 +60,7 @@
 
 - [x] Install UI library (PrimeVue / Bootstrap)
 - [x] Create "Player Card" components (name, team, stats)
-- [ ] Add AI button per player → "Start or Bench?"
+- [x] Add AI button per player → "Start or Bench?"
 
 **Deliverable:** Interactive player cards with AI feedback
 **Cost:** ~$2 total
