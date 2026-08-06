@@ -1,7 +1,22 @@
 import { Player } from "../../types/Player";
-import { Stats } from "../../types/Stats";
+import { Team } from "../../types/Team";
 
-export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Player[]> {
+export async function getTeamForOwner(leagueId: string, ownerId: string): Promise<Team> {
+    // get team information
+    const leagueRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users`);
+    const leagueUsers = await leagueRes.json();
+    if (!Array.isArray(leagueUsers)) {
+        console.error("Invalid league users data:", leagueUsers);
+        throw new Error("Invalid league users data");
+    }
+
+    const teamInformation = leagueUsers.find((u: { user_id: string }) => u.user_id === ownerId);
+    if (!teamInformation) {
+        console.error("User not found in league:", ownerId);
+        throw new Error("User not found in league");
+    }
+    const teamName = teamInformation.metadata?.team_name || "Unnamed Team";
+
     // fetch rosters
     const res = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters`);
     const rosters = await res.json();
@@ -32,22 +47,17 @@ export async function getTeamForOwner(leagueId: string, ownerId: string): Promis
             p ? p.full_name : "Unknown",
             p ? p.team : null,
             p ? p.position : null,
-            new Stats({}) // Initialize with empty stats, will be updated later
+            p ? p.age : null,
+            p?.stats ?? null
         );
     });
 
-    // Fetch all player stats in parallel. This improves performance significantly.
-    const statsPromises = myPlayers.map(async (player) => {
-        const stats = await fetch(`https://api.sleeper.app/stats/nfl/player/${player.id}?season_type=regular&season=${new Date().getFullYear()}`);
-        if (!stats.ok) {
-            console.error(`Failed to fetch stats for player ${player.id}:`, stats.statusText);
-            player.stats = new Stats({}); // Assign empty stats on failure
-            return;
-        }
-        const statsData = await stats.json();
-        player.stats = new Stats(statsData.stats);
-    });
-    await Promise.all(statsPromises);
-
-    return myPlayers;
+    // Construct and return a Team instance
+    return new Team(
+        teamInformation.user_id,
+        teamName,
+        leagueId,
+        ownerId,
+        myPlayers
+    );
 }

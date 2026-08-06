@@ -1,17 +1,19 @@
-import { Stats } from "./Stats";
+import { PlayerStats } from "./PlayerStats/PlayerStats";
 
 export class Player {
     id: string;
     name: string;
     team: string | null;
     position: string | null;
-    stats: Stats;
+    age: number | null;
+    stats: PlayerStats | null;
 
-    constructor(id: string, name: string, team: string | null, position: string | null, stats: Stats) {
+    constructor(id: string, name: string, team: string | null, position: string | null, age: number | null, stats: PlayerStats | null) {
         this.id = id;
         this.name = name;
         this.team = team;
         this.position = position;
+        this.age = age;
         this.stats = stats;
     }
 }

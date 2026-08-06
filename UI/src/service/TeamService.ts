@@ -1,8 +1,8 @@
-import { Player } from "../../../backend/types/Player.js";
+import { Team } from "@/types/Team";
+import { Player } from "../../../backend/types/Player";
 
 export class TeamService {
- 
-    async fetchMyTeam(): Promise<Player[]> {
+    async fetchMyTeam(): Promise<Team> {
         const api = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${api}api/myteam`, {
             method: 'GET',
@@ -14,7 +14,7 @@ export class TeamService {
             throw new Error('Failed to fetch team data');
         }
         const data = await response.json();
-        return data.players;
+        return data;
     }
 
     async analyzeTeam(players: Player[]): Promise<string> {
@@ -31,6 +31,22 @@ export class TeamService {
         }
         const data = await response.json();
         return data.analysis;
+    }
+
+    async startOrBench(player: Player, roster: Player[]): Promise<string> {
+        const api = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${api}api/start-or-bench`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ player, roster }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to get start/bench recommendation');
+        }
+        const data = await response.json();
+        return data.recommendation;
     }
 }
 
