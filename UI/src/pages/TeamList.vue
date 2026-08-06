@@ -110,6 +110,9 @@ export default defineComponent({
   methods: {
     async analyzeTeam() {
       try {
+        if (!this.myteam) {
+          return;
+        }
         // Show loading state
         this.analysisInProgress = true;
         this.analysis = await this.TeamService.analyzeTeam(this.myteam.players);
