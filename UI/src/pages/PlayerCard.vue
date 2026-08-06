@@ -4,19 +4,31 @@
       <div class="row justify-content-center">
         <div class="col-md-10">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <PrimeButton as="RouterLink" :to="{ name: 'Home' }" icon="pi pi-arrow-left"
-              label="Back to Player List" />
-            <PrimeButton v-if="myteam?.players?.length" :loading="startBenchInProgress" label="Start or Bench?"
-              @click="getStartOrBenchAdvice" />
+            <PrimeButton
+              as="RouterLink"
+              :to="{ name: 'Home' }"
+              icon="pi pi-arrow-left"
+              label="Back to Player List"
+            />
+            <PrimeButton
+              v-if="myteam?.players?.length"
+              :loading="startBenchInProgress"
+              label="Start or Bench?"
+              @click="getStartOrBenchAdvice"
+            />
           </div>
           <Card class="mb-4 shadow-sm">
             <template #header>
               <div class="d-flex align-items-center gap-3">
                 <span
                   class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                  style="width: 64px; height: 64px; font-size: 2rem;">
-                  <img :src="`https://sleepercdn.com/content/nfl/players/${player.id}.jpg`" :alt="player.name"
-                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                  style="width: 64px; height: 64px; font-size: 2rem;"
+                >
+                  <img
+                    :src="`https://sleepercdn.com/content/nfl/players/${player.id}.jpg`"
+                    :alt="player.name"
+                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                  />
                 </span>
                 <div>
                   <h2 class="mb-0">{{ player.name }}</h2>
@@ -33,7 +45,10 @@
                     </template>
                     <template #content>
                       <dl class="row mb-0">
-                        <template v-for="(label, key) in baseStatLabels" :key="key">
+                        <template
+                          v-for="(label, key) in baseStatLabels"
+                          :key="key"
+                        >
                           <dt class="col-7"><span class="stat-bullet">•</span> {{ label }}</dt>
                           <dd class="col-5">{{ player.stats[key] ?? 'N/A' }}</dd>
                         </template>
@@ -41,14 +56,20 @@
                     </template>
                   </Card>
                 </div>
-                <div class="col-12 col-md-6" v-if="Object.keys(extraStats(player.stats)).length">
+                <div
+                  class="col-12 col-md-6"
+                  v-if="Object.keys(extraStats(player.stats)).length"
+                >
                   <Card class="mb-3">
                     <template #header>
                       <h5>Additional Stats</h5>
                     </template>
                     <template #content>
                       <dl class="row mb-0">
-                        <template v-for="(value, key) in extraStats(player.stats)" :key="key">
+                        <template
+                          v-for="(value, key) in extraStats(player.stats)"
+                          :key="key"
+                        >
                           <dt class="col-7"><span class="stat-bullet">•</span> {{ formatHeader(key) }}</dt>
                           <dd class="col-5">{{ value ?? 'N/A' }}</dd>
                         </template>
@@ -61,14 +82,28 @@
           </Card>
         </div>
       </div>
-      <PrimeDialog :header="`Start or Bench: ${player?.name}`" v-model:visible="showStartBenchDialog" :modal="true"
-        :closable="true" :style="{ width: '50vw' }">
+      <PrimeDialog
+        :header="`Start or Bench: ${player?.name}`"
+        v-model:visible="showStartBenchDialog"
+        :modal="true"
+        :closable="true"
+        :style="{ width: '50vw' }"
+      >
         <p>{{ startBenchRecommendation }}</p>
       </PrimeDialog>
     </div>
-    <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
-      <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
-        animationDuration="1s" aria-label="Loading" />
+    <div
+      v-else
+      class="d-flex flex-column justify-content-center align-items-center"
+      style="height: 200px;"
+    >
+      <ProgressSpinner
+        style="width: 50px; height: 50px;"
+        strokeWidth="4"
+        fill="var(--surface-ground)"
+        animationDuration="1s"
+        aria-label="Loading"
+      />
       <span class="ms-3">Loading player details...</span>
     </div>
   </div>

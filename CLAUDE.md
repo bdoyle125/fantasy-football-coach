@@ -68,3 +68,87 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
 - No automated tests exist anywhere in this repo today — don't assume a test suite to run; if adding one, there's no existing convention to follow yet.
 - The backend has no routes/controllers/models split — if that changes, update this file.
 - Two of the Sleeper-backed routes (`/api/player/:playerId`, `/api/leagues`) are hardcoded to "last year" per `TODO` comments in `server.ts`.
+
+## Coding style
+
+Applies to all TypeScript in this repo (`backend/`, `UI/src/**/*.ts`, and `<script>` blocks in `UI/src/**/*.vue`).
+
+- **Opening braces on the same line** as `if`, `else`, `for`, `while`, `for...of`, `for...in`, methods, classes, etc. (K&R / "Egyptian" style).
+- **Always use braces** for `if`, `else`, `for`, `while`, `for...of`, `for...in` — even for single-line bodies. No braceless one-liners.
+- **No multi-line ternary (`?:`) expressions.** A ternary that doesn't fit comfortably on one line is hard to read — rewrite it as an `if`/`else` (with braces). Single-line ternaries for short, simple value selection are fine. This also applies to nested ternaries (`a ? b : c ? d : e`) — never nest, always use `if`/`else` or a `switch`.
+
+```ts
+// Correct
+if (condition) {
+  doSomething();
+} else {
+  doOtherThing();
+}
+
+// Correct — short single-line ternary
+const label = isActive ? "Active" : "Inactive";
+
+// Wrong — missing braces
+if (condition) doSomething();
+
+// Wrong — brace on next line
+if (condition)
+{
+  doSomething();
+}
+
+// Wrong — multi-line ternary; rewrite as if/else
+const session = matched.relatedSessionId
+  ? sessions.find((s) => s.sessionId === matched.relatedSessionId)
+  : null;
+
+// Correct — same logic as if/else
+let session: Session | null = null;
+if (matched.relatedSessionId) {
+  session = sessions.find((s) => s.sessionId === matched.relatedSessionId) ?? null;
+}
+
+// Wrong — nested ternary
+const tier = score > 90 ? "gold" : score > 50 ? "silver" : "bronze";
+```
+
+### Markup / template formatting
+
+An element's content should be on its own line, separate from its tags — unless the whole element (tags + content) fits comfortably on one line. If attributes push the opening tag onto multiple lines, don't collapse the content onto the closing tag's line. Applies to Vue templates generally, not just one component.
+
+```html
+<!-- Wrong — content crammed onto the closing tag when attributes are multi-line -->
+<div
+  class="font-semibold text-3xl mb-6"
+  v-if="showSalesData"
+>Admin Dashboard</div>
+
+<!-- Correct — content on its own line -->
+<div
+  class="font-semibold text-3xl mb-6"
+  v-if="showSalesData"
+>
+  Admin Dashboard
+</div>
+
+<!-- Also correct — fits on one line -->
+<div class="font-semibold text-3xl mb-6">Admin Dashboard</div>
+```
+
+An element with a single attribute/directive may stay on one line with the tag. An element with **two or more** attributes/directives must put each one on its own line — regardless of whether they'd fit together on one line — with the closing `>` (or self-closing `/>`) on its own line as well.
+
+```html
+<!-- Wrong — multiple attributes sharing lines, even though they'd fit -->
+<Column field="name" header="Name" :sortable="true" :filter="true" />
+
+<!-- Correct — one attribute per line -->
+<Column
+  field="name"
+  header="Name"
+  :sortable="true"
+  :filter="true"
+/>
+
+<!-- Correct — single attribute stays inline -->
+<DataTable :value="myteam.players">
+```
