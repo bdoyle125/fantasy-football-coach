@@ -6,6 +6,8 @@ Guidance for Claude Code when working in this repo.
 
 Fantasy football coaching app: a Vue frontend and an Express/TypeScript backend. The backend pulls a user's roster and player stats from the Sleeper fantasy API and uses OpenAI (`gpt-5-mini`) to generate team-improvement suggestions, which the frontend displays.
 
+See `ROADMAP.md` (repo root) for the current project status, schedule, and session-by-session checklist — it's not auto-loaded like this file, so check it directly when picking up work.
+
 ## Repo layout
 
 This is a monorepo with **no root-level `package.json`** — the two apps are independent, each with its own dependencies and scripts.
