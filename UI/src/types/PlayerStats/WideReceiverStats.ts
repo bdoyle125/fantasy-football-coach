@@ -4,7 +4,7 @@ export class WideReceiverStats extends ReceiverStats {
   receivingBonusWideReceiver: number;
   firstDownBonusWideReceiver: number;
 
-  constructor(data: object) {
+  constructor(data: Record<string, any>) {
     super(data);
 
     this.receivingBonusWideReceiver = data["bonus_rec_wr"];

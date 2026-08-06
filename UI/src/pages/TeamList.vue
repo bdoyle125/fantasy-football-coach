@@ -4,7 +4,7 @@
     <DataTable :value="myteam.players">
       <Column field="name" header="Name" :sortable="true" :filter="true">
         <template #body="slotProps">
-          <a @click.prevent="navigateToPlayerCard(slotProps.data.id)">{{ slotProps.data.name }}</a>
+          <RouterLink :to="{ name: 'PlayerCard', params: { playerId: slotProps.data.id } }">{{ slotProps.data.name }}</RouterLink>
         </template>
       </Column>
       <Column field="position" header="Position" :sortable="true" :filter="true" />
@@ -27,10 +27,10 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useRouter } from "vue-router";
 import { TeamService } from "../service/TeamService";
 import { Team } from "../types/Team";
 import { ProgressSpinner, DataTable, Column, Button, Dialog } from "primevue";
+import { RouterLink } from "vue-router";
 
 interface componentData {
   myteam: Team | null;
@@ -46,12 +46,12 @@ export default defineComponent({
     Column,
     Button,
     ProgressSpinner,
-    Dialog
+    Dialog,
+    RouterLink
   },
   setup() {
     return {
       TeamService: new TeamService(),
-      router: useRouter(),
     }
   },
   data(): componentData {
@@ -78,17 +78,18 @@ export default defineComponent({
     async getTeam() {
       try {
         this.myteam = await this.TeamService.fetchMyTeam()
-        // Sort my team by position
+        // Sort my team by position; unknown positions sort to the end
         const positionOrder = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
+        const positionRank = (position: string | null) => {
+          const index = positionOrder.indexOf(position ?? '');
+          return index === -1 ? positionOrder.length : index;
+        };
         this.myteam.players.sort((a, b) => {
-          return positionOrder.indexOf(a.position) - positionOrder.indexOf(b.position);
+          return positionRank(a.position) - positionRank(b.position);
         });
       } catch (error) {
         console.error("Error loading team:", error);
       }
-    },
-    navigateToPlayerCard(playerId: string) {
-      this.router.push({ name: 'PlayerCard', params: { playerId: playerId } });
     }
   },
   async mounted() {

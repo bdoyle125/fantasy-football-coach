@@ -14,7 +14,7 @@ export class ReceiverStats extends PlayerStats {
   receivingRedZoneTargets: number;
   receivingDrops: number;
 
-  constructor(data: object) {
+  constructor(data: Record<string, any>) {
     super(data);
 
     this.receptions = data["rec"];

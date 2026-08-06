@@ -92,7 +92,7 @@ class Server {
         // Deserialize players from request body
         const players = req.body.players;
         if (!players || !Array.isArray(players)) {
-          return response.status(500).json({ error: 'Invalid players data' });
+          return response.status(400).json({ error: 'Invalid players data' });
         }
         const playerDescriptions = players.map((p: any) => {
           return `${p.name} (${p.position || 'Unknown Position'}) from ${p.team || 'Unknown Team'} with stats: ${JSON.stringify(p.stats)}`;

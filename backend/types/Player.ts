@@ -6,9 +6,9 @@ export class Player {
     team: string | null;
     position: string | null;
     age: number | null;
-    stats: PlayerStats;
+    stats: PlayerStats | null;
 
-    constructor(id: string, name: string, team: string | null, position: string | null, age: number | null, stats: PlayerStats) {
+    constructor(id: string, name: string, team: string | null, position: string | null, age: number | null, stats: PlayerStats | null) {
         this.id = id;
         this.name = name;
         this.team = team;

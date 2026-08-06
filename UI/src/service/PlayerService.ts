@@ -49,8 +49,6 @@ export class PlayerService {
                 playerStats = new PlayerStats(playerData.stats);
         }
 
-        console.log('Constructed player stats:', playerStats);
-
         // Return a Player instance
         return new Player(
             playerData.player_id,

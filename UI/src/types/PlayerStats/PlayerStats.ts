@@ -18,7 +18,7 @@ export class PlayerStats {
   penalties: number;
   penaltyYards: number;
 
-  constructor(data: object) {
+  constructor(data: Record<string, any>) {
     this.gamesPlayed = data["gp"];
     this.gamesActive = data["gms_active"];
     this.positionRankStandard = data["pos_rank_std"];
