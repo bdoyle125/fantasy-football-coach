@@ -1,4 +1,4 @@
-import { ReceiverStats } from "./ReceiverStats.js";
+import { ReceiverStats } from "./ReceiverStats";
 
 export class TightEndStats extends ReceiverStats {
   bonusReceivingTightEnd: number;

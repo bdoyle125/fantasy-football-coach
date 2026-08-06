@@ -1,5 +1,5 @@
-import { Team } from "@/types/Team.js";
-import { Player } from "../../../backend/types/Player.js";
+import { Team } from "@/types/Team";
+import { Player } from "../../../backend/types/Player";
 
 export class TeamService {
     async fetchMyTeam(): Promise<Team> {

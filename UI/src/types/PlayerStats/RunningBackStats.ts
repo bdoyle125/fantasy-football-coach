@@ -1,4 +1,4 @@
-import { RusherStats } from "./RusherStats.js";
+import { RusherStats } from "./RusherStats";
 
 export class RunningBackStats extends RusherStats {
   receivingBonusRunningBack: number;

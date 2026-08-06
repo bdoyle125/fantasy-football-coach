@@ -1,11 +1,11 @@
-import { Player } from "@/types/Player.js";
-import { DefenseSpecialTeamsStats } from "@/types/PlayerStats/DefenseSpecialTeamsStats.js";
-import { KickerStats } from "@/types/PlayerStats/KickerStats.js";
-import { PlayerStats } from "@/types/PlayerStats/PlayerStats.js";
-import { QuarterbackStats } from "@/types/PlayerStats/QuarterbackStats.js";
-import { RunningBackStats } from "@/types/PlayerStats/RunningBackStats.js";
-import { TightEndStats } from "@/types/PlayerStats/TightEndStats.js";
-import { WideReceiverStats } from "@/types/PlayerStats/WideReceiverStats.js";
+import { Player } from "@/types/Player";
+import { DefenseSpecialTeamsStats } from "@/types/PlayerStats/DefenseSpecialTeamsStats";
+import { KickerStats } from "@/types/PlayerStats/KickerStats";
+import { PlayerStats } from "@/types/PlayerStats/PlayerStats";
+import { QuarterbackStats } from "@/types/PlayerStats/QuarterbackStats";
+import { RunningBackStats } from "@/types/PlayerStats/RunningBackStats";
+import { TightEndStats } from "@/types/PlayerStats/TightEndStats";
+import { WideReceiverStats } from "@/types/PlayerStats/WideReceiverStats";
 
 export class PlayerService {
 

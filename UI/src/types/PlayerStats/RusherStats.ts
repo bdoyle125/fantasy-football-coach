@@ -1,4 +1,4 @@
-import { PlayerStats } from "./PlayerStats.js";
+import { PlayerStats } from "./PlayerStats";
 
 export class RusherStats extends PlayerStats {
   rushingAttempts: number;

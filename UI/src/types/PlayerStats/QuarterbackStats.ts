@@ -1,4 +1,4 @@
-import { PasserStats } from "./PasserStats.js";
+import { PasserStats } from "./PasserStats";
 
 export class QuarterbackStats extends PasserStats {
   rushingLongestTouchdown: number;

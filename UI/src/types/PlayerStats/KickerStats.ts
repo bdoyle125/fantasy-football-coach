@@ -1,4 +1,4 @@
-import { PlayerStats } from "./PlayerStats.js";
+import { PlayerStats } from "./PlayerStats";
 
 export class KickerStats extends PlayerStats {
   fieldGoalsMade: number;
