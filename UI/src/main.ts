@@ -8,10 +8,10 @@ import Aura from '@primeuix/themes/aura';
 import 'primeicons/primeicons.css'
 
 const app = createApp(App);
-app.use(PrimeVue as any, {
+app.use(PrimeVue, {
     theme: {
         preset: Aura
     }
-}); // Explicitly cast to bypass TypeScript error
+});
 app.use(router);
 app.mount('#app');

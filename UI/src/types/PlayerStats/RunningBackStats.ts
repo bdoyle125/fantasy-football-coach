@@ -4,7 +4,7 @@ export class RunningBackStats extends RusherStats {
   receivingBonusRunningBack: number;
   firstDownBonusRunningBack: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.receivingBonusRunningBack = data["bonus_rec_rb"];

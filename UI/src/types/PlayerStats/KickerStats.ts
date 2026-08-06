@@ -10,7 +10,7 @@ export class KickerStats extends PlayerStats {
   fieldGoalPercentage: number;
   kickPoints: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.fieldGoalsMade = data["fgm"];

@@ -14,7 +14,7 @@ export class DefenseSpecialTeamsStats extends PlayerStats {
   pointsAllowed: number;
   yardsAllowed: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.sacks = data["sack"];

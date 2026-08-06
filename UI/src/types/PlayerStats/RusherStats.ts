@@ -12,7 +12,7 @@ export class RusherStats extends PlayerStats {
   rushingTacklesForLoss: number;
   rushingTacklesForLossYards: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.rushingAttempts = data["rush_att"];

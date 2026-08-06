@@ -4,7 +4,7 @@ export class TightEndStats extends ReceiverStats {
   bonusReceivingTightEnd: number;
   bonusFirstDownsTightEnd: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.bonusReceivingTightEnd = data["bonus_rec_te"];

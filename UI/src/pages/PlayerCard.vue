@@ -143,11 +143,11 @@ export default defineComponent({
     }
   },
   methods: {
-    extraStats(stats: any) {
+    extraStats(stats: Record<string, number | undefined>) {
       const baseFields = Object.keys(this.baseStatLabels);
       return Object.keys(stats)
         .filter(key => !baseFields.includes(key))
-        .reduce((obj, key) => { obj[key] = stats[key]; return obj; }, {});
+        .reduce((obj: Record<string, number | undefined>, key) => { obj[key] = stats[key]; return obj; }, {});
     },
     formatHeader(key: string) {
       return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());

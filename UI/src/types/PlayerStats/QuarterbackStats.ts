@@ -6,7 +6,7 @@ export class QuarterbackStats extends PasserStats {
   bonusFirstDownQuarterback: number;
   bonusPassCompletions25Plus: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.rushingLongestTouchdown = data["rush_td_lng"];

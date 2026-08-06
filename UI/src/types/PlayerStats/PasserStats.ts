@@ -16,7 +16,7 @@ export class PasserStats extends PlayerStats {
   passAirYards: number;
   completionPercentage: number;
 
-  constructor(data: Record<string, any>) {
+  constructor(data: Record<string, number>) {
     super(data);
 
     this.passAttempts = data["pass_att"];
