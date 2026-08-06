@@ -4,9 +4,9 @@
       <div class="row justify-content-center">
         <div class="col-md-10">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <Button as="RouterLink" :to="{ name: 'Home' }" icon="pi pi-arrow-left"
+            <PrimeButton as="RouterLink" :to="{ name: 'Home' }" icon="pi pi-arrow-left"
               label="Back to Player List" />
-            <Button v-if="myteam?.players?.length" :loading="startBenchInProgress" label="Start or Bench?"
+            <PrimeButton v-if="myteam?.players?.length" :loading="startBenchInProgress" label="Start or Bench?"
               @click="getStartOrBenchAdvice" />
           </div>
           <Card class="mb-4 shadow-sm">
@@ -61,10 +61,10 @@
           </Card>
         </div>
       </div>
-      <Dialog :header="`Start or Bench: ${player?.name}`" v-model:visible="showStartBenchDialog" :modal="true"
+      <PrimeDialog :header="`Start or Bench: ${player?.name}`" v-model:visible="showStartBenchDialog" :modal="true"
         :closable="true" :style="{ width: '50vw' }">
         <p>{{ startBenchRecommendation }}</p>
-      </Dialog>
+      </PrimeDialog>
     </div>
     <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
       <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
@@ -79,7 +79,7 @@ import { PlayerService } from '@/service/PlayerService';
 import { TeamService } from '@/service/TeamService';
 import { Player } from '@/types/Player';
 import { Team } from '@/types/Team';
-import { ProgressSpinner, Card, Button, Dialog } from 'primevue';
+import { ProgressSpinner, Card, Button as PrimeButton, Dialog as PrimeDialog } from 'primevue';
 import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -97,8 +97,8 @@ export default defineComponent({
   components: {
     ProgressSpinner,
     Card,
-    Button,
-    Dialog
+    PrimeButton,
+    PrimeDialog
   },
   data(): componentData {
     return {

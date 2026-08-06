@@ -12,11 +12,11 @@
       <Column field="team" header="Team" :sortable="true" :filter="true" />
     </DataTable>
     <div class="d-flex justify-content-end mt-3">
-      <Button v-if="myteam?.players.length" :loading="analysisInProgress" label="Analyze Team" @click="analyzeTeam" />
+      <PrimeButton v-if="myteam?.players.length" :loading="analysisInProgress" label="Analyze Team" @click="analyzeTeam" />
     </div>
-    <Dialog header="Team Analysis" v-model:visible="showAnalysisDialog" :modal="true" :closable="true" :style="{ width: '50vw' }">
+    <PrimeDialog header="Team Analysis" v-model:visible="showAnalysisDialog" :modal="true" :closable="true" :style="{ width: '50vw' }">
       <p>{{ analysis }}</p>
-    </Dialog>
+    </PrimeDialog>
   </div>
   <div v-else class="d-flex flex-column justify-content-center align-items-center" style="height: 200px;">
     <ProgressSpinner style="width: 50px; height: 50px;" strokeWidth="4" fill="var(--surface-ground)"
@@ -29,7 +29,7 @@
 import { defineComponent } from "vue";
 import { TeamService } from "../service/TeamService";
 import { Team } from "../types/Team";
-import { ProgressSpinner, DataTable, Column, Button, Dialog } from "primevue";
+import { ProgressSpinner, DataTable, Column, Button as PrimeButton, Dialog as PrimeDialog } from "primevue";
 import { RouterLink } from "vue-router";
 
 interface componentData {
@@ -44,9 +44,9 @@ export default defineComponent({
   components: {
     DataTable,
     Column,
-    Button,
+    PrimeButton,
     ProgressSpinner,
-    Dialog,
+    PrimeDialog,
     RouterLink
   },
   setup() {
