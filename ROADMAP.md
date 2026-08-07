@@ -116,12 +116,12 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 ---
 
 ### ▶️ **Session 5 — Testing Foundations** 🆕
-- [ ]  Choose a backend test framework: Jest (or Vitest) + Supertest for route testing
-- [ ]  Add an `npm test` script and a basic CI-friendly config
-- [ ]  Write unit tests for the existing `/analyze-team` route (happy path)
-- [ ]  Mock the Sleeper API (e.g. `nock` or `msw`) and test the roster-fetch logic against timeouts, 500s, and malformed JSON
-- [ ]  Mock the OpenAI API and test that a failed/slow AI call fails gracefully instead of crashing the request
-- [ ]  Add basic error-handling middleware (if not already present) so failed external API calls return a clean JSON error, not a stack trace
+- [X]  Choose a backend test framework: Jest (or Vitest) + Supertest for route testing
+- [X]  Add an `npm test` script and a basic CI-friendly config
+- [X]  Write unit tests for the existing `/analyze-team` route (happy path)
+- [X]  Mock the Sleeper API (e.g. `nock` or `msw`) and test the roster-fetch logic against timeouts, 500s, and malformed JSON
+- [X]  Mock the OpenAI API and test that a failed/slow AI call fails gracefully instead of crashing the request
+- [X]  Add basic error-handling middleware (if not already present) so failed external API calls return a clean JSON error, not a stack trace
 
 **🎯 Deliverable:** A test suite covering both existing external API calls, including their failure paths
 **💸 Cost:** $0 (all external calls are mocked in tests)
