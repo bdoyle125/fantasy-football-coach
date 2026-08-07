@@ -75,8 +75,8 @@ export async function setActiveLeague(input: {
         provider: input.provider,
         provider_league_id: input.providerLeagueId,
         provider_owner_id: input.providerOwnerId,
-        league_name: input.leagueName ?? null,
         updated_at: new Date().toISOString(),
+        ...(input.leagueName !== undefined ? { league_name: input.leagueName } : {}),
       },
       { onConflict: 'user_id,provider,provider_league_id,provider_owner_id' },
     )

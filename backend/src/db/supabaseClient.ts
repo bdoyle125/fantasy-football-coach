@@ -16,3 +16,7 @@ export function getSupabaseClient(): SupabaseClient {
   client = createClient(url, serviceRoleKey);
   return client;
 }
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}

@@ -154,6 +154,19 @@ if (matched.relatedSessionId) {
 const tier = score > 90 ? "gold" : score > 50 ? "silver" : "bronze";
 ```
 
+**No ternaries that conditionally call a function (especially an `async`/`await`'d one) instead of selecting between two plain values.** A ternary should pick between two already-available values. If either branch invokes a function — particularly one with side effects like a DB/network call — the conditional is doing control flow, not value selection, and belongs in an `if`/`else` even if it fits on one line.
+
+```ts
+// Wrong — ternary conditionally decides whether to make a DB call
+const settings = isSupabaseConfigured() ? await getActiveLeagueSettings() : null;
+
+// Correct — same logic as if/else
+let settings: ActiveLeagueSettings | null = null;
+if (isSupabaseConfigured()) {
+  settings = await getActiveLeagueSettings();
+}
+```
+
 ### Markup / template formatting
 
 An element's content should be on its own line, separate from its tags — unless the whole element (tags + content) fits comfortably on one line. If attributes push the opening tag onto multiple lines, don't collapse the content onto the closing tag's line. Applies to Vue templates generally, not just one component.

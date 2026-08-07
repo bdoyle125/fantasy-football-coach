@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { getTeamForOwner } from './service-functions/getTeamForOwner';
 import { getActiveLeagueSettings, setActiveLeague } from './repositories/settingsRepository';
+import { isSupabaseConfigured } from './db/supabaseClient';
 
 dotenv.config();
 
@@ -53,10 +54,16 @@ class Server {
 
     this.app.get('/api/myteam', async (req: Request, res: Response) => {
       try {
-        const settings = await getActiveLeagueSettings();
+        let settings = null;
+        if (isSupabaseConfigured()) {
+          settings = await getActiveLeagueSettings();
+        }
         let leagueId: string | undefined;
         let ownerId: string | undefined;
         if (settings) {
+          if (settings.provider !== 'sleeper') {
+            return res.status(501).json({ error: `Provider "${settings.provider}" is not supported yet` });
+          }
           leagueId = settings.providerLeagueId;
           ownerId = settings.providerOwnerId;
         } else {

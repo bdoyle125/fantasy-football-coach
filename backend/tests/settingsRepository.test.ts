@@ -147,6 +147,58 @@ describe('setActiveLeague', () => {
     await expect(setActiveLeague(input)).rejects.toThrow('Failed to save league');
   });
 
+  it('omits league_name from the upsert payload when leagueName is not provided, preserving the existing name', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/leagues`, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        const leagueName = 'league_name' in body ? null : 'Existing Name';
+        return HttpResponse.json({
+          id: 'league-2',
+          provider: 'sleeper',
+          provider_league_id: 'lg-2',
+          provider_owner_id: 'ow-2',
+          league_name: leagueName,
+        });
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/user_settings`, () => {
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const settings = await setActiveLeague(input);
+
+    expect(settings.leagueName).toBe('Existing Name');
+  });
+
+  it('includes league_name in the upsert payload when leagueName is explicitly provided', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/leagues`, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        expect(body).toHaveProperty('league_name', 'New Name');
+        return HttpResponse.json({
+          id: 'league-2',
+          provider: 'sleeper',
+          provider_league_id: 'lg-2',
+          provider_owner_id: 'ow-2',
+          league_name: 'New Name',
+        });
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/user_settings`, () => {
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const settings = await setActiveLeague({ ...input, leagueName: 'New Name' });
+
+    expect(settings.leagueName).toBe('New Name');
+  });
+
   it('throws a wrapped error when updating the active setting fails', async () => {
     mswServer.use(
       http.get(`${SUPABASE_URL}/rest/v1/users`, () => {

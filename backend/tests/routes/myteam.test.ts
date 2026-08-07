@@ -25,11 +25,13 @@ describe('GET /api/myteam', () => {
     mockSetActiveLeague.mockReset();
   });
 
-  // One test below deletes SLEEPER_OWNER_ID to force the 400 path; restore it after
-  // every test so that mutation doesn't leak into the others.
+  // Some tests below delete SLEEPER_OWNER_ID / SUPABASE_* to force fallback paths;
+  // restore them after every test so those mutations don't leak into the others.
   afterEach(() => {
     process.env.SLEEPER_LEAGUE_ID = TEST_LEAGUE_ID;
     process.env.SLEEPER_OWNER_ID = TEST_OWNER_ID;
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
   });
 
   it('returns the assembled team using the DB-resolved active league', async () => {
@@ -100,5 +102,35 @@ describe('GET /api/myteam', () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Error fetching team data' });
+  });
+
+  it('skips the Supabase lookup and falls back to env vars when Supabase is not configured', async () => {
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const res = await request(app).get('/api/myteam');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      leagueId: TEST_LEAGUE_ID,
+      ownerId: TEST_OWNER_ID,
+    });
+    expect(mockGetActiveLeagueSettings).not.toHaveBeenCalled();
+  });
+
+  it('returns 501 when the active league uses an unsupported provider', async () => {
+    mockGetActiveLeagueSettings.mockResolvedValueOnce({
+      userId: 'user-1',
+      leagueId: 'league-1',
+      provider: 'espn',
+      providerLeagueId: 'espn-league-1',
+      providerOwnerId: 'espn-owner-1',
+      leagueName: 'ESPN League',
+    });
+
+    const res = await request(app).get('/api/myteam');
+
+    expect(res.status).toBe(501);
+    expect(res.body).toEqual({ error: 'Provider "espn" is not supported yet' });
   });
 });
