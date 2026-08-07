@@ -8,6 +8,8 @@ import { mswServer } from './msw/server';
 process.env.OPENAI_API_KEY = 'test-key';
 process.env.SLEEPER_LEAGUE_ID = 'test-league-id';
 process.env.SLEEPER_OWNER_ID = 'test-owner-id';
+process.env.SUPABASE_URL = 'https://test.supabase.co';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 
 // onUnhandledRequest: 'error' makes any accidentally-unmocked external call fail the
 // test loudly instead of silently hitting live Sleeper/OpenAI endpoints.
