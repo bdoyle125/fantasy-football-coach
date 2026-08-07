@@ -1,4 +1,4 @@
-import express, { type Request, type Response, type Application } from 'express';
+import express, { type Request, type Response, type NextFunction, type Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
@@ -7,7 +7,7 @@ import { getTeamForOwner } from './service-functions/getTeamForOwner';
 dotenv.config();
 
 class Server {
-  private app: Application;
+  public readonly app: Application;
   private openAiClient: OpenAI;
   private port: number = Number(process.env.PORT) || 5000;
 
@@ -18,6 +18,7 @@ class Server {
     });
     this.configureMiddleware();
     this.configureRoutes();
+    this.configureErrorHandling();
   }
 
   private configureMiddleware() {
@@ -144,6 +145,16 @@ class Server {
 
   }
 
+  private configureErrorHandling() {
+    this.app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+      console.error('Unhandled error:', err);
+      if (res.headersSent) {
+        return next(err);
+      }
+      res.status(500).json({ error: 'Internal server error' });
+    });
+  }
+
   public start(): void {
     this.app.listen(this.port, () => {
       console.log(`Server is running on port ${this.port}`);
@@ -151,5 +162,11 @@ class Server {
   }
 }
 
-const server = new Server();
-server.start();
+export function createApp(): Application {
+  return new Server().app;
+}
+
+if (require.main === module) {
+  const server = new Server();
+  server.start();
+}
