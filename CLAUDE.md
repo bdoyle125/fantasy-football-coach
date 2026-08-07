@@ -50,6 +50,39 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
 - **Env vars** (`backend/.env`, gitignored — not committed; see `backend/.env.example`): `OPENAI_API_KEY`, `SLEEPER_LEAGUE_ID`, `SLEEPER_OWNER_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 - **Tests**: Vitest + Supertest + MSW under `backend/tests/`, run via `npm test`. New Supabase-touching code is tested by mocking `settingsRepository` at the module level in route tests, and against MSW-mocked PostgREST responses in `tests/settingsRepository.test.ts` directly — no real Supabase call happens in CI, no DB service container needed.
 
+### Supabase schema
+
+Added in Session 6 (migration: `backend/db/migrations/0001_init.sql`) to persist which Sleeper league/owner the app should use, replacing what used to live only in `SLEEPER_LEAGUE_ID`/`SLEEPER_OWNER_ID`. It stores **only that pointer** — no roster, player, or AI-analysis data is persisted anywhere; those are still fetched live from Sleeper/OpenAI on every request (see `getTeamForOwner.ts` and the `/api/analyze-team`/`/api/start-or-bench` routes). Row Level Security is off everywhere — the backend only ever connects with the `service_role` key, which bypasses it.
+
+- **`users`** — one row per user. No auth exists yet (Supabase Auth is an optional Sessions 10–11 stretch item), so today there's exactly one row, created by `ensureSingleUser()` in `scripts/seedSettings.ts` on first run.
+  | Column | Type | Notes |
+  |---|---|---|
+  | `id` | `uuid`, PK | `gen_random_uuid()` default |
+  | `email` | `text`, unique, nullable | Unset by the seed script; a placeholder for future Auth |
+  | `display_name` | `text`, nullable | Unset by the seed script |
+  | `created_at` | `timestamptz` | |
+
+- **`leagues`** — one user → many leagues (schema supports multi-league even though nothing in the UI/routes uses more than one yet). `provider`/`provider_league_id`/`provider_owner_id` are deliberately generic (not `sleeper_*`) so adding ESPN support later needs no rename — see [Multi-Provider Architecture](../ROADMAP.md#-multi-provider--multi-league-support-stretch) in `ROADMAP.md`.
+  | Column | Type | Notes |
+  |---|---|---|
+  | `id` | `uuid`, PK | |
+  | `user_id` | `uuid`, FK → `users.id` | `on delete cascade` |
+  | `provider` | `text` | `check (provider in ('sleeper', 'espn'))`, defaults to `'sleeper'` |
+  | `provider_league_id` | `text` | Opaque external ID (Sleeper's `league_id`) |
+  | `provider_owner_id` | `text` | Opaque external ID (Sleeper's `user_id`/owner) |
+  | `league_name` | `text`, nullable | Optional display label; `null` unless set via `PUT /api/settings` |
+  | `created_at` / `updated_at` | `timestamptz` | |
+  | *unique* | `(user_id, provider, provider_league_id, provider_owner_id)` | What `setActiveLeague()`'s upsert conflicts on |
+
+- **`user_settings`** — one row per user, pointing at which `leagues` row is currently active. A separate table rather than an `is_active` flag on `leagues`, so "one active league per user" holds by construction (the PK *is* `user_id`) instead of needing a partial unique index.
+  | Column | Type | Notes |
+  |---|---|---|
+  | `user_id` | `uuid`, PK, FK → `users.id` | `on delete cascade` |
+  | `active_league_id` | `uuid`, nullable, FK → `leagues.id` | `on delete set null` |
+  | `created_at` / `updated_at` | `timestamptz` | |
+
+`GET /api/settings` reads this pointer chain (`user_settings` joined to `leagues`) via `settingsRepository.getActiveLeagueSettings()`; `PUT /api/settings` writes it via `setActiveLeague()`, which upserts the `leagues` row and repoints `user_settings.active_league_id` at it.
+
 ## Frontend (`UI/`)
 
 - **Stack**: Vue 3.5 using the **Options API** (`defineComponent`, typed `data()`) throughout — not `<script setup>`. Match this style in new components. Built with Vite 7, TypeScript, PrimeVue 4 (Aura theme) for widgets plus Bootstrap 5 utility classes for layout. `vue-router` 4 for routing. No state management library (Pinia/Vuex) — state is local to components.
