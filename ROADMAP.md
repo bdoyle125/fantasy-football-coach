@@ -131,13 +131,15 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 ---
 
 ### ▶️ **Session 6 — Database Integration** *(was Session 5)*
-- [ ]  Set up Supabase project
-- [ ]  Connect Supabase to store user settings (team, league)
-- [ ]  (Optional) Log past AI analyses
-- [ ]  Design the `leagues` table to support more than one league per user, and a `provider` column (`sleeper` / `espn`) — see [Multi-Provider Architecture](#-multi-provider--multi-league-support-stretch). You don't have to build multi-league yet, just don't paint yourself into a single-league schema.
+- [x]  Set up Supabase project
+- [x]  Connect Supabase to store user settings (team, league)
+- [ ]  (Optional) Log past AI analyses — skipped this session, deferred
+- [x]  Design the `leagues` table to support more than one league per user, and a `provider` column (`sleeper` / `espn`) — see [Multi-Provider Architecture](#-multi-provider--multi-league-support-stretch). You don't have to build multi-league yet, just don't paint yourself into a single-league schema.
 
 **🎯 Deliverable:** Persistent user data across sessions
 **💸 Cost:** $0
+
+> **Status:** Done and verified against a live Supabase project — `GET /api/settings` and `GET /api/myteam` both confirmed reading the seeded row (see `backend/db/migrations/0001_init.sql`, `backend/src/db/`, `backend/src/repositories/settingsRepository.ts`). Only "Log past AI analyses" remains, deliberately deferred to a later session.
 
 ---
 

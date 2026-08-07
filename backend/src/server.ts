@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { getTeamForOwner } from './service-functions/getTeamForOwner';
+import { getActiveLeagueSettings, setActiveLeague } from './repositories/settingsRepository';
 
 dotenv.config();
 
@@ -52,15 +53,63 @@ class Server {
 
     this.app.get('/api/myteam', async (req: Request, res: Response) => {
       try {
-        const leagueId = req.query.leagueId as string || process.env.SLEEPER_LEAGUE_ID;
-        if (!leagueId || !process.env.SLEEPER_OWNER_ID) {
-          return res.status(400).json({ error: 'Missing Sleeper league or owner ID in environment variables or query' });
+        const settings = await getActiveLeagueSettings();
+        let leagueId: string | undefined;
+        let ownerId: string | undefined;
+        if (settings) {
+          leagueId = settings.providerLeagueId;
+          ownerId = settings.providerOwnerId;
+        } else {
+          console.warn('No active league in Supabase; falling back to SLEEPER_LEAGUE_ID/SLEEPER_OWNER_ID.');
+          leagueId = process.env.SLEEPER_LEAGUE_ID;
+          ownerId = process.env.SLEEPER_OWNER_ID;
         }
-        const myTeam = await getTeamForOwner(leagueId, process.env.SLEEPER_OWNER_ID);
+        if (!leagueId || !ownerId) {
+          return res.status(400).json({ error: 'Missing Sleeper league or owner ID in database or environment variables' });
+        }
+        const myTeam = await getTeamForOwner(leagueId, ownerId);
         res.json(myTeam);
       } catch (error) {
         console.error('Error fetching team data:', error);
         res.status(500).json({ error: 'Error fetching team data' });
+      }
+    });
+
+    this.app.get('/api/settings', async (req: Request, res: Response) => {
+      try {
+        const settings = await getActiveLeagueSettings();
+        if (!settings) {
+          return res.status(404).json({ error: 'No active league configured' });
+        }
+        res.json(settings);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        res.status(500).json({ error: 'Error fetching settings' });
+      }
+    });
+
+    this.app.put('/api/settings', async (req: Request, res: Response) => {
+      try {
+        const { provider, providerLeagueId, providerOwnerId, leagueName } = req.body;
+        if (provider !== 'sleeper' && provider !== 'espn') {
+          return res.status(400).json({ error: 'provider must be "sleeper" or "espn"' });
+        }
+        if (typeof providerLeagueId !== 'string' || !providerLeagueId) {
+          return res.status(400).json({ error: 'providerLeagueId is required' });
+        }
+        if (typeof providerOwnerId !== 'string' || !providerOwnerId) {
+          return res.status(400).json({ error: 'providerOwnerId is required' });
+        }
+        const settings = await setActiveLeague({
+          provider,
+          providerLeagueId,
+          providerOwnerId,
+          ...(typeof leagueName === 'string' ? { leagueName } : {}),
+        });
+        res.json(settings);
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        res.status(500).json({ error: 'Error updating settings' });
       }
     });
 

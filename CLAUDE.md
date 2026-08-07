@@ -22,10 +22,13 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
 ## Backend (`backend/`)
 
 - **Stack**: Express 5, TypeScript (`module: nodenext`, `target: esnext`, strict mode), run via `ts-node` in dev.
-- **Scripts**: `npm run dev` (ts-node, port 5000), `npm run build` (tsc → `dist/`), `npm start` (`node dist/src/server.js`). No `test` script.
-- **Architecture**: everything is in one place — there's no `routes/`/`controllers/`/`models/` split yet.
+- **Scripts**: `npm run dev` (ts-node, port 5000), `npm run build` (tsc → `dist/`), `npm start` (`node dist/src/server.js`), `npm run db:seed` (one-time: copies `SLEEPER_LEAGUE_ID`/`SLEEPER_OWNER_ID` into Supabase as the seeded user's active league — see `src/db/`/`src/repositories/` below).
+- **Architecture**: mostly everything in one place — there's no `routes/`/`controllers/`/`models/` split yet, but Session 6 introduced two small folders for the Supabase integration.
   - `src/server.ts` — a `Server` class that owns the Express app, the OpenAI client, middleware (`cors()`, `express.json()`), and every route, registered inline in `configureRoutes()`.
   - `src/service-functions/getTeamForOwner.ts` — fetches league users/rosters/players from Sleeper and assembles a `Team` of `Player`s.
+  - `src/db/supabaseClient.ts` — lazy singleton `getSupabaseClient()`, built from `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`.
+  - `src/repositories/settingsRepository.ts` — `getActiveLeagueSettings()`, `setActiveLeague()`, `ensureSingleUser()` (seed-script only); reads/writes the `users`/`leagues`/`user_settings` tables (schema in `db/migrations/0001_init.sql`).
+  - `scripts/seedSettings.ts` — the `db:seed` one-time bootstrap script.
   - `types/` — `Player.ts`, `Team.ts`, and a `PlayerStats/` hierarchy (base `PlayerStats` plus position-specific subclasses: `QuarterbackStats`, `RunningBackStats`, `WideReceiverStats`, `TightEndStats`, `KickerStats`, `DefenseSpecialTeamsStats`, composed from `PasserStats`/`RusherStats`/`ReceiverStats`), mapping Sleeper's raw snake_case stat keys to typed fields.
 - **Routes** (all in `src/server.ts`):
 
@@ -33,7 +36,9 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
   |---|---|---|
   | GET | `/` | Health check; warns in console if Sleeper env vars are missing |
   | POST | `/api/openai-test` | Sanity-checks OpenAI connectivity |
-  | GET | `/api/myteam` | Returns the roster for `SLEEPER_OWNER_ID` (optional `leagueId` query param) |
+  | GET | `/api/myteam` | Returns the roster for the active league/owner. Resolved from Supabase (`settingsRepository.getActiveLeagueSettings()`) first, falling back to `SLEEPER_LEAGUE_ID`/`SLEEPER_OWNER_ID` env vars if no active league is configured yet |
+  | GET | `/api/settings` | Returns the active league settings stored in Supabase, or 404 if none configured |
+  | PUT | `/api/settings` | Body `{ provider, providerLeagueId, providerOwnerId, leagueName? }` — upserts the league and marks it active |
   | GET | `/api/player/:playerId` | Proxies Sleeper's player-stats endpoint (hardcoded to last year — see `TODO` in source) |
   | GET | `/api/leagues` | Proxies Sleeper's leagues-for-user endpoint (also hardcoded to last year — see `TODO`) |
   | POST | `/api/analyze-team` | Takes `players[]` in the body, prompts OpenAI for team-improvement suggestions |
@@ -41,8 +46,9 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
 - **External integrations**:
   - **Sleeper API** (`api.sleeper.app`) — no key required, called with raw `fetch` (no axios).
   - **OpenAI API** — via the official `openai` SDK, model `gpt-5-mini`; requires `OPENAI_API_KEY`.
-- **Env vars** (`backend/.env`, gitignored — not committed): `OPENAI_API_KEY`, `SLEEPER_LEAGUE_ID`, `SLEEPER_OWNER_ID`.
-- **No automated tests exist** in the backend.
+  - **Supabase** (Postgres) — via `@supabase/supabase-js`, accessed only from the backend with the `service_role` key (bypasses Row Level Security, which is intentionally left off since there's no per-user auth yet). Stores which league/owner is "active" so it persists across restarts instead of living only in env vars. Schema: `users` (single seeded row, no auth this session), `leagues` (one user → many, with a `provider` column for future ESPN support), `user_settings` (one row per user pointing at the active `leagues` row). See `backend/db/migrations/0001_init.sql`.
+- **Env vars** (`backend/.env`, gitignored — not committed; see `backend/.env.example`): `OPENAI_API_KEY`, `SLEEPER_LEAGUE_ID`, `SLEEPER_OWNER_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **Tests**: Vitest + Supertest + MSW under `backend/tests/`, run via `npm test`. New Supabase-touching code is tested by mocking `settingsRepository` at the module level in route tests, and against MSW-mocked PostgREST responses in `tests/settingsRepository.test.ts` directly — no real Supabase call happens in CI, no DB service container needed.
 
 ## Frontend (`UI/`)
 
@@ -61,15 +67,16 @@ myteam.json    Sample saved output of GET /api/myteam (not code)
 
 ## Running locally
 
-1. `backend/`: copy env vars into `backend/.env`, then `npm run dev` (serves on port 5000).
+1. `backend/`: copy env vars into `backend/.env` (including the Supabase ones — see `backend/.env.example`), run the SQL in `backend/db/migrations/0001_init.sql` against the Supabase project once, then `npm run db:seed` once to migrate `SLEEPER_LEAGUE_ID`/`SLEEPER_OWNER_ID` into the DB, then `npm run dev` (serves on port 5000).
 2. `UI/`: `npm run dev` (Vite dev server; proxies `/api/*` calls to the backend).
-3. `bruno-calls/` holds a Bruno collection (`fantasy-football-coach`) with four saved requests against `http://localhost:5000` for manually exercising the API: **OpenAI Test** (`POST /api/openai-test`), **My Team** (`GET /api/myteam`), **Analyze Team** (`POST /api/analyze-team`), **Leagues** (`GET /api/leagues`). There's no saved request for `GET /` or `GET /api/player/:playerId`.
+3. `bruno-calls/` holds a Bruno collection (`fantasy-football-coach`) with saved requests against `http://localhost:5000` for manually exercising the API: **OpenAI Test** (`POST /api/openai-test`), **My Team** (`GET /api/myteam`), **Analyze Team** (`POST /api/analyze-team`), **Leagues** (`GET /api/leagues`), **Get Settings** (`GET /api/settings`), **Update Settings** (`PUT /api/settings`). There's no saved request for `GET /` or `GET /api/player/:playerId`.
 
 ## Notes for future work
 
-- No automated tests exist anywhere in this repo today — don't assume a test suite to run; if adding one, there's no existing convention to follow yet.
-- The backend has no routes/controllers/models split — if that changes, update this file.
+- The backend has no routes/controllers/models split — if that changes, update this file. `src/db/` and `src/repositories/` (Session 6) are the first departures from "everything in `server.ts`".
 - Two of the Sleeper-backed routes (`/api/player/:playerId`, `/api/leagues`) are hardcoded to "last year" per `TODO` comments in `server.ts`.
+- No frontend UI exists yet for changing the active league/owner — it's managed via `GET`/`PUT /api/settings` (Bruno/curl) or the `db:seed` script. `UI/src/service/TeamService.ts` still calls `GET /api/myteam` with no params.
+- No Supabase Auth/login exists yet — `users` currently has exactly one seeded row. If Auth is added (an optional Sessions 10–11 stretch item), Row Level Security should be turned on and the backend's Supabase reads scoped per-user.
 
 ## Coding style
 

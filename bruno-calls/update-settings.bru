@@ -1,0 +1,20 @@
+meta {
+  name: Update Settings
+  type: http
+  seq: 6
+}
+
+put {
+  url: http://localhost:5000/api/settings
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "provider": "sleeper",
+    "providerLeagueId": "your-sleeper-league-id",
+    "providerOwnerId": "your-sleeper-owner-id",
+    "leagueName": "My League"
+  }
+}
