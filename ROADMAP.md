@@ -24,40 +24,42 @@
 
 ---
 
-## 🧭 Project Status Snapshot (as of Session 4)
+## 🧭 Project Status Snapshot (as of Aug 6)
 
-**Done (Sessions 1–4):** repo scaffolded, frontend + backend running, `.env` configured, deployed skeleton, Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` backend route sends roster + stats to OpenAI and displays the summary, UI library installed, Player Card components built, per-player "Start or Bench?" AI button working, deploy problem resolved.
+**Done (Sessions 1–6):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support.
 
-**Not started:** everything from Session 5 onward.
+**Not started:** everything from Session 7 onward.
+
+> "(Optional) Log past AI analyses" was deliberately skipped this session and deferred — noted in Session 6 below.
 
 ---
 
 ## 📅 Schedule to Kickoff (Sep 9, 2026)
 
-Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8pm obligation, Thu/Fri nights are Pokemon, and Jul 31–Aug 4 is vacation. That leaves **Monday evenings and weekends** as the actual work windows — which is more total time per week than the original ~2hrs/session pace assumed, so there's real buffer built in below.
+Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8pm obligation, Thu/Fri nights are Pokemon. Same work windows as always — **Monday evenings and weekends** — but Sessions 4–6 landing early on Aug 6 buys back roughly two full weekends of slack.
 
 | Dates | Day(s) | Focus |
 | --- | --- | --- |
-| Jul 30 | Thu (today) | Likely Pokemon night — no work expected |
-| Jul 31 – Aug 4 | Vacation | Off |
-| Aug 5 | Wed | Off — travel recovery, obligation at 7pm anyway |
-| **Aug 8–9** | Sat/Sun | Finish Session 4 (Start/Bench button) → start Session 5 (testing setup) |
-| Aug 10 | Mon evening | Finish Session 5 (mock Sleeper/OpenAI failures) |
-| **Aug 15–16** | Sat/Sun | Session 6 — Database Integration (Supabase) |
-| Aug 17 | Mon evening | Buffer / polish Session 6 |
-| **Aug 22–23** | Sat/Sun | Session 7 — Smarter AI Coaching (weekly + last-season stats, new system prompt) |
-| Aug 24 | Mon evening | Finish Session 7 — highest-risk item, gets the extra day on purpose |
-| **Aug 29–30** | Sat/Sun | Session 8 (Matchup preview) + start Session 9 (Dashboard polish) |
-| Aug 31 | Mon evening | Finish Session 9 |
-| **Sep 5–6** | Sat/Sun | Session 10–11 — README, deploy, final bug pass. If ahead of schedule, room for a *light* stretch item here |
+| Aug 6 | Thu (today) | 🎉 Sessions 4–6 wrapped early |
+| Aug 7 | Fri | Likely Pokemon night — off |
+| **Aug 8–9** | Sat/Sun | Session 7 — Smarter AI Coaching (start: weekly + last-season stats, new system prompt) |
+| Aug 10 | Mon evening | Continue Session 7 |
+| **Aug 15–16** | Sat/Sun | Finish Session 7 → Session 8 (Matchup preview) |
+| Aug 17 | Mon evening | Start Session 9 (Dashboard polish) |
+| **Aug 22–23** | Sat/Sun | Finish Session 9 → start Session 10–11 (README, deploy prep, bug pass) |
+| Aug 24 | Mon evening | Continue wrap-up |
+| **Aug 29–30** | Sat/Sun | Finish wrap-up. First real shot at a stretch goal if things stay smooth (see priority notes) |
+| Aug 31 | Mon evening | Buffer |
+| **Sep 5–6** | Sat/Sun | Full buffer weekend — final polish, or deeper stretch work |
 | Sep 7 | Mon (Labor Day) | Bonus full day — buffer for whatever slipped |
 | Sep 8 | Tue | Final smoke test after the 7pm obligation |
 | **Sep 9** | Wed | 🏁 Kickoff — app should be live before 8:20pm ET |
 
-**Priority calls if time gets tight:**
-- Session 7 (AI coaching) has the most buffer because it's the biggest lift and most likely to eat extra debugging time.
-- Multi-league switching and ESPN support (see [Multi-Provider Architecture](#-multi-provider--multi-league-support-stretch)) are realistically **post-kickoff** work. Only attempt the light "provider column" groundwork if Sessions 4–9 finish early — a solid Sleeper-only app beats a half-finished multi-provider one.
-- Whichever of Thu/Fri isn't a Pokemon night is a natural overflow slot if a weekend runs long, but the plan above doesn't rely on it.
+**Priority calls, updated for the extra buffer:**
+- Session 7 (AI coaching) still gets first claim on time — it's still the biggest, riskiest lift even with slack in the bank.
+- With two extra weekends now in reserve (Aug 29–30 and Sep 5–6), **multi-league switching** is realistically attemptable if Sessions 7–9 land on schedule — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
+- **ESPN support stays post-kickoff.** The cookie-based auth (`SWID`/`espn_s2`) is the kind of thing that eats a whole weekend on its own; not worth risking the ship date over.
+- Whichever of Thu/Fri isn't a Pokemon night remains a natural overflow slot, still not relied on in the plan above.
 
 ---
 
@@ -115,13 +117,13 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 5 — Testing Foundations** 🆕
-- [X]  Choose a backend test framework: Jest (or Vitest) + Supertest for route testing
-- [X]  Add an `npm test` script and a basic CI-friendly config
-- [X]  Write unit tests for the existing `/analyze-team` route (happy path)
-- [X]  Mock the Sleeper API (e.g. `nock` or `msw`) and test the roster-fetch logic against timeouts, 500s, and malformed JSON
-- [X]  Mock the OpenAI API and test that a failed/slow AI call fails gracefully instead of crashing the request
-- [X]  Add basic error-handling middleware (if not already present) so failed external API calls return a clean JSON error, not a stack trace
+### ▶️ **Session 5 — Testing Foundations** ✅
+- [x]  Choose a backend test framework: Jest (or Vitest) + Supertest for route testing
+- [x]  Add an `npm test` script and a basic CI-friendly config
+- [x]  Write unit tests for the existing `/analyze-team` route (happy path)
+- [x]  Mock the Sleeper API (e.g. `nock` or `msw`) and test the roster-fetch logic against timeouts, 500s, and malformed JSON
+- [x]  Mock the OpenAI API and test that a failed/slow AI call fails gracefully instead of crashing the request
+- [x]  Add basic error-handling middleware (if not already present) so failed external API calls return a clean JSON error, not a stack trace
 
 **🎯 Deliverable:** A test suite covering both existing external API calls, including their failure paths
 **💸 Cost:** $0 (all external calls are mocked in tests)
@@ -130,7 +132,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 6 — Database Integration** *(was Session 5)*
+### ▶️ **Session 6 — Database Integration** ✅
 - [x]  Set up Supabase project
 - [x]  Connect Supabase to store user settings (team, league)
 - [ ]  (Optional) Log past AI analyses — skipped this session, deferred
@@ -143,7 +145,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 7 — Smarter AI Coaching** *(was Session 6, expanded)*
+### ▶️ **Session 7 — Smarter AI Coaching** *(up next)*
 - [ ]  Extend the Sleeper data fetch to pull **this session's stats** *and* **previous-season stats** for each rostered player
 - [ ]  Rewrite the AI system prompt to establish a clear "expert fantasy coach" persona — confident, direct, a little personality (see [AI Prompt Engineering Guidelines](#-ai-prompt-engineering-guidelines))
 - [ ]  Feed the model structured context: this-session stats, season-to-date averages, last-season totals, opponent defense ranking, injury status
@@ -157,7 +159,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 8 — Matchup of the Session** *(was Session 7)*
+### ▶️ **Session 8 — Matchup of the Session**
 - [ ]  Display your upcoming opponent's roster
 - [ ]  Ask AI for "Matchup Preview" summary + predicted winner
 
@@ -166,7 +168,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 9 — Dashboard Polish** *(was Session 8)*
+### ▶️ **Session 9 — Dashboard Polish**
 - [ ]  Add stat cards: Team Strength | Player to Watch | Trade Suggestion
 - [ ]  Improve mobile layout + styling
 - [ ]  Add loading spinners + error states
@@ -176,7 +178,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Sessions 10–11 — Wrap-Up & Stretch** *(was Sessions 9–10, expanded)*
+### ▶️ **Sessions 10–11 — Wrap-Up & Stretch**
 - [ ]  (Optional) Add Supabase Auth login
 - [ ]  (Optional) "Ask Coach Anything" chat feature
 - [ ]  (Optional) "Season Summary" AI report
