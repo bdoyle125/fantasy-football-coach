@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
+import { http, HttpResponse } from 'msw';
 import { mockCreate, MockOpenAI } from '../mocks/openai';
+import { mswServer } from '../msw/server';
+import { SEASON_SYSTEM_PROMPT } from '../../src/service-functions/buildCoachContext';
 
 // Must run before `createApp` is imported: server.ts does `new OpenAI(...)` at module
 // construction time, so the mock has to be registered first or the real SDK gets used.
@@ -29,6 +32,62 @@ describe('POST /api/analyze-team', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ analysis: 'Trade your kicker.' });
+  });
+
+  it('sends the season-scoped Coach Sideline system prompt ahead of the player-context user message', async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'Trade your kicker.' } }],
+    });
+
+    await request(app)
+      .post('/api/analyze-team')
+      .send({ players: [{ id: '1234', name: 'Player A', position: 'QB', team: 'KC' }] });
+
+    const messages = mockCreate.mock.calls[0][0].messages;
+    expect(messages[0]).toEqual({ role: 'system', content: SEASON_SYSTEM_PROMPT });
+    expect(messages[1].role).toBe('user');
+  });
+
+  it('includes season and last-season stats, and omits single-week matchup framing', async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'Trade your kicker.' } }],
+    });
+
+    await request(app)
+      .post('/api/analyze-team')
+      .send({ players: [{ id: '1234', name: 'Player A', position: 'QB', team: 'KC' }] });
+
+    const userMessage = mockCreate.mock.calls[0][0].messages[1].content;
+    expect(userMessage).toContain('SEASON_STATS');
+    expect(userMessage).toContain('LAST_SEASON_STATS');
+    expect(userMessage).not.toContain('WEEKLY_STATS');
+    expect(userMessage).not.toContain('WEEKLY_PROJECTION');
+    expect(userMessage).not.toContain('OPPONENT');
+  });
+
+  // A single roster-mate's Sleeper stats endpoint failing shouldn't sink the whole
+  // request — that player's context degrades to "unavailable" instead.
+  it('still returns 200 when one player\'s season stats fetch fails, marking that player unavailable', async () => {
+    mswServer.use(
+      http.get('https://api.sleeper.app/stats/nfl/player/:playerId', ({ params }) => {
+        if (params.playerId === 'broken-player-id') {
+          return HttpResponse.error();
+        }
+        return HttpResponse.json(null);
+      }),
+    );
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'Trade your kicker.' } }],
+    });
+
+    const res = await request(app)
+      .post('/api/analyze-team')
+      .send({ players: [{ id: 'broken-player-id', name: 'Player A', position: 'QB', team: 'KC' }] });
+
+    expect(res.status).toBe(200);
+    const userMessage = mockCreate.mock.calls[0][0].messages[1].content;
+    expect(userMessage).toContain('Player A');
+    expect(userMessage).toContain('unavailable');
   });
 
   it('returns 400 when players is missing or not an array', async () => {

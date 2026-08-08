@@ -1,6 +1,6 @@
 # Fantasy Football Coach — Project Roadmap 🏈
 
-**Duration:** 9–11 sessions | **Time:** ~2 hrs/session | **Total Cost:** ~$10–15
+**Duration:** 12 sessions | **Time:** ~2 hrs/session | **Total Cost:** ~$10–15
 **🏁 Ship-by date:** Wednesday, September 9, 2026 (2026 NFL regular season kickoff)
 
 **Goal:** Build a lightweight web app that analyzes your fantasy football roster and generates AI-powered advice.
@@ -24,11 +24,11 @@
 
 ---
 
-## 🧭 Project Status Snapshot (as of Aug 6)
+## 🧭 Project Status Snapshot (as of Aug 8)
 
-**Done (Sessions 1–6):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support.
+**Done (Sessions 1–7):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Sideline" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls).
 
-**Not started:** everything from Session 7 onward.
+**Not started:** everything from Session 8 onward.
 
 > "(Optional) Log past AI analyses" was deliberately skipped this session and deferred — noted in Session 6 below.
 
@@ -40,13 +40,14 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 | Dates | Day(s) | Focus |
 | --- | --- | --- |
-| Aug 6 | Thu (today) | 🎉 Sessions 4–6 wrapped early |
+| Aug 6 | Thu | 🎉 Sessions 4–6 wrapped early |
 | Aug 7 | Fri | Likely Pokemon night — off |
-| **Aug 8–9** | Sat/Sun | Session 7 — Smarter AI Coaching (start: weekly + last-season stats, new system prompt) |
-| Aug 10 | Mon evening | Continue Session 7 |
-| **Aug 15–16** | Sat/Sun | Finish Session 7 → Session 8 (Matchup preview) |
-| Aug 17 | Mon evening | Start Session 9 (Dashboard polish) |
-| **Aug 22–23** | Sat/Sun | Finish Session 9 → start Session 10–11 (README, deploy prep, bug pass) |
+| **Aug 8** | Sat (today) | 🎉 Session 7 — Smarter AI Coaching wrapped same-day |
+| **Aug 9** | Sun | Session 8 — Player View Redesign (start) |
+| Aug 10 | Mon evening | Finish Session 8 |
+| **Aug 15–16** | Sat/Sun | Session 9 (Matchup preview) |
+| Aug 17 | Mon evening | Start Session 10 (Dashboard polish) |
+| **Aug 22–23** | Sat/Sun | Finish Session 10 → start Sessions 11–12 (README, deploy prep, bug pass) |
 | Aug 24 | Mon evening | Continue wrap-up |
 | **Aug 29–30** | Sat/Sun | Finish wrap-up. First real shot at a stretch goal if things stay smooth (see priority notes) |
 | Aug 31 | Mon evening | Buffer |
@@ -56,8 +57,8 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 | **Sep 9** | Wed | 🏁 Kickoff — app should be live before 8:20pm ET |
 
 **Priority calls, updated for the extra buffer:**
-- Session 7 (AI coaching) still gets first claim on time — it's still the biggest, riskiest lift even with slack in the bank.
-- With two extra weekends now in reserve (Aug 29–30 and Sep 5–6), **multi-league switching** is realistically attemptable if Sessions 7–9 land on schedule — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
+- Session 7 (AI coaching) is done — it was the biggest, riskiest lift, and it wrapped same-day, which is exactly what freed up Aug 9–10 for the new Session 8 (Player View Redesign) without touching the kickoff date.
+- With two extra weekends now in reserve (Aug 29–30 and Sep 5–6), **multi-league switching** is realistically attemptable if Sessions 7–10 land on schedule — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
 - **ESPN support stays post-kickoff.** The cookie-based auth (`SWID`/`espn_s2`) is the kind of thing that eats a whole weekend on its own; not worth risking the ship date over.
 - Whichever of Thu/Fri isn't a Pokemon night remains a natural overflow slot, still not relied on in the plan above.
 
@@ -145,21 +146,35 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 7 — Smarter AI Coaching** *(up next)*
-- [ ]  Extend the Sleeper data fetch to pull **this session's stats** *and* **previous-season stats** for each rostered player
-- [ ]  Rewrite the AI system prompt to establish a clear "expert fantasy coach" persona — confident, direct, a little personality (see [AI Prompt Engineering Guidelines](#-ai-prompt-engineering-guidelines))
-- [ ]  Feed the model structured context: this-session stats, season-to-date averages, last-season totals, opponent defense ranking, injury status
-- [ ]  Explicitly instruct the model to reason *beyond* the numbers you hand it — matchup trends, recent news, general fantasy strategy — not just restate stats back
-- [ ]  (Optional, adds cost) enable a web-search/retrieval tool call so the model can pull current injury/news updates instead of relying only on what you feed it
-- [ ]  Add opponent defenses + game projections to the context
-- [ ]  Add coach-like tone and humor to responses
+### ▶️ **Session 7 — Smarter AI Coaching** ✅
+- [x]  Extend the Sleeper data fetch to pull **this session's stats** *and* **previous-season stats** for each rostered player
+- [x]  Rewrite the AI system prompt to establish a clear "expert fantasy coach" persona — confident, direct, a little personality (see [AI Prompt Engineering Guidelines](#-ai-prompt-engineering-guidelines))
+- [x]  Feed the model structured context: this-session stats, season-to-date averages, last-season totals, opponent defense ranking, injury status
+- [x]  Explicitly instruct the model to reason *beyond* the numbers you hand it — matchup trends, recent news, general fantasy strategy — not just restate stats back
+- [ ]  (Optional, adds cost) enable a web-search/retrieval tool call so the model can pull current injury/news updates instead of relying only on what you feed it — optional, deferred
+- [x]  Add opponent defenses + game projections to the context
+- [x]  Add coach-like tone and humor to responses
 
 **🎯 Deliverable:** Personable "Coach AI" responses grounded in real weekly + historical stats, instructed to think past the raw numbers
 **💸 Cost:** ~$3–5 cumulative (prompts get bigger with more stats)
 
+> **Status:** Done and test-covered (80 backend tests passing) — see `backend/src/service-functions/getWeeklyStatsContext.ts`, `getSeasonStatsContext.ts`, `getPlayerProjection.ts`, `getDefenseRankings.ts`, and the "Coach Sideline" persona/prompts in `buildCoachContext.ts`. One deviation from the original wording: rather than one shared context blob per player, the context is now deliberately scoped per route — `/api/start-or-bench` gets weekly stats, projection, and opponent/defense ranking (no season data), while `/api/analyze-team` gets season + last-season stats (no matchup data) — since one is a single-week decision and the other is a season-long team-construction question. Only the optional web-search/retrieval tool call remains undone.
+
 ---
 
-### ▶️ **Session 8 — Matchup of the Session**
+### ▶️ **Session 8 — Player View Redesign**
+- [ ]  Redesign the player detail page (`UI/src/pages/PlayerCard.vue`) to lead with the stats that actually drive a start/bench call — fantasy points, position rank, games played — instead of a flat, mostly-alphabetical two-column stat dump
+- [ ]  Hide or collapse stat fields that render `N/A` for a given player/position instead of always showing the full ~18-field "Base Stats" list regardless of relevance (e.g. defensive/special-teams snaps on a WR)
+- [ ]  Surface injury status inline on the page itself (the backend already tracks it via `getInjuryStatuses`), rather than only inside the AI's Start/Bench response text
+- [ ]  Move the long tail of raw box-score stats (today's "Additional Stats" card) behind a collapsible/expandable section so the page reads as a summary first, full detail on demand
+- [ ]  Pass over layout/visual hierarchy so the headline stats are scannable at a glance, not just another dense `<dl>` list
+
+**🎯 Deliverable:** A player page that reads as a quick scouting-report summary instead of a raw stat dump, without losing access to the full data underneath
+**💸 Cost:** $0 (frontend-only, no new API/AI calls)
+
+---
+
+### ▶️ **Session 9 — Matchup of the Session**
 - [ ]  Display your upcoming opponent's roster
 - [ ]  Ask AI for "Matchup Preview" summary + predicted winner
 
@@ -168,7 +183,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 9 — Dashboard Polish**
+### ▶️ **Session 10 — Dashboard Polish**
 - [ ]  Add stat cards: Team Strength | Player to Watch | Trade Suggestion
 - [ ]  Improve mobile layout + styling
 - [ ]  Add loading spinners + error states
@@ -178,7 +193,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Sessions 10–11 — Wrap-Up & Stretch**
+### ▶️ **Sessions 11–12 — Wrap-Up & Stretch**
 - [ ]  (Optional) Add Supabase Auth login
 - [ ]  (Optional) "Ask Coach Anything" chat feature
 - [ ]  (Optional) "Season Summary" AI report
