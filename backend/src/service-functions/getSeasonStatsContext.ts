@@ -4,8 +4,8 @@ import { fetchStatsSlot } from "./lib/fetchStatsSlot";
 
 export async function getSeasonPlayerStats(playerId: string, state: SleeperState): Promise<SeasonStatsContext> {
     const base = `https://api.sleeper.app/stats/nfl/player/${playerId}`;
-    const seasonUrl = `${base}?season_type=regular&season=${state.season}`;
-    const lastSeasonUrl = `${base}?season_type=regular&season=${state.previousSeason}`;
+    const seasonUrl = `${base}?season_type=${state.seasonType}&season=${state.season}`;
+    const lastSeasonUrl = `${base}?season_type=${state.seasonType}&season=${state.previousSeason}`;
 
     const [seasonStats, lastSeasonStats] = await Promise.all([
         fetchStatsSlot(seasonUrl),
