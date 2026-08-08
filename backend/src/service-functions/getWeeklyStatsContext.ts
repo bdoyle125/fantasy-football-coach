@@ -2,7 +2,7 @@ import { SleeperState } from "../../types/SleeperState";
 import { fetchStatsSlot } from "./lib/fetchStatsSlot";
 
 export async function getWeeklyPlayerStats(playerId: string, state: SleeperState): Promise<Record<string, any> | null> {
-    const url = `https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${state.season}&week=${state.week}`;
+    const url = `https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=${state.seasonType}&season=${state.season}&week=${state.week}`;
     return fetchStatsSlot(url);
 }
 
