@@ -2,7 +2,7 @@ import { SleeperState } from "../../types/SleeperState";
 import { PlayerProjection } from "../../types/PlayerProjection";
 
 export async function getPlayerProjection(playerId: string, state: SleeperState): Promise<PlayerProjection> {
-    const url = `https://api.sleeper.app/projections/nfl/player/${playerId}?season_type=regular&season=${state.season}&week=${state.week}`;
+    const url = `https://api.sleeper.app/projections/nfl/player/${playerId}?season_type=${state.seasonType}&season=${state.season}&week=${state.week}`;
     try {
         const res = await fetch(url);
         if (!res.ok) {
