@@ -49,4 +49,38 @@ describe('getInjuryStatuses', () => {
 
     expect(statuses.get(TEST_PLAYER_ID)).toBeNull();
   });
+
+  it('caches the players dictionary so a second call does not refetch it', async () => {
+    let requestCount = 0;
+    mswServer.use(
+      http.get('https://api.sleeper.app/v1/players/nfl', () => {
+        requestCount++;
+        return HttpResponse.json({ [TEST_PLAYER_ID]: { injury_status: 'Out' } });
+      }),
+    );
+
+    await getInjuryStatuses([TEST_PLAYER_ID]);
+    const statuses = await getInjuryStatuses([TEST_PLAYER_ID]);
+
+    expect(statuses.get(TEST_PLAYER_ID)).toBe('Out');
+    expect(requestCount).toBe(1);
+  });
+
+  it('falls back to the last cached dictionary when a later refetch fails', async () => {
+    mswServer.use(
+      http.get('https://api.sleeper.app/v1/players/nfl', () => {
+        return HttpResponse.json({ [TEST_PLAYER_ID]: { injury_status: 'Out' } });
+      }),
+    );
+    await getInjuryStatuses([TEST_PLAYER_ID]);
+
+    mswServer.use(
+      http.get('https://api.sleeper.app/v1/players/nfl', () => {
+        return HttpResponse.error();
+      }),
+    );
+    const statuses = await getInjuryStatuses([TEST_PLAYER_ID]);
+
+    expect(statuses.get(TEST_PLAYER_ID)).toBe('Out');
+  });
 });

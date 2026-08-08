@@ -1,5 +1,6 @@
 import { NFL_TEAM_ABBREVIATIONS } from "../constants/nflTeams";
 import { PositionKey, TeamDefenseRanking } from "../../types/DefenseRankings";
+import { TtlCache } from "./lib/ttlCache";
 
 const STAT_FIELD_BY_POSITION: Record<PositionKey, string> = {
     QB: "fan_pts_allow_qb",
@@ -55,7 +56,7 @@ function rankTeamsByPosition(fantasyPointsAllowedByTeam: Map<string, Record<Posi
     return rankByTeam;
 }
 
-export async function getDefenseRankingsForSeason(season: string): Promise<Map<string, TeamDefenseRanking>> {
+async function fetchDefenseRankingsForSeason(season: string): Promise<Map<string, TeamDefenseRanking>> {
     const entries = await Promise.all(
         NFL_TEAM_ABBREVIATIONS.map(async (team) => {
             const fantasyPointsAllowed = await fetchTeamFantasyPointsAllowed(team, season);
@@ -73,4 +74,22 @@ export async function getDefenseRankingsForSeason(season: string): Promise<Map<s
         });
     }
     return result;
+}
+
+// One request here is 32 external Sleeper calls, and /api/start-or-bench makes one of
+// these per request — cache per season briefly instead of refetching every time.
+const DEFENSE_RANKINGS_TTL_MS = 60 * 60 * 1000;
+const rankingsCacheBySeason = new Map<string, TtlCache<Map<string, TeamDefenseRanking>>>();
+
+export async function getDefenseRankingsForSeason(season: string): Promise<Map<string, TeamDefenseRanking>> {
+    let cache = rankingsCacheBySeason.get(season);
+    if (!cache) {
+        cache = new TtlCache<Map<string, TeamDefenseRanking>>(DEFENSE_RANKINGS_TTL_MS);
+        rankingsCacheBySeason.set(season, cache);
+    }
+    return cache.getOrFetch(() => fetchDefenseRankingsForSeason(season));
+}
+
+export function clearDefenseRankingsCache(): void {
+    rankingsCacheBySeason.clear();
 }

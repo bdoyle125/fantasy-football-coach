@@ -185,7 +185,7 @@ class Server {
         }
         response.json({ analysis: aiResponse.choices[0].message.content });
       } catch (error) {
-        response.status(400).json({ error: 'Error analyzing team' });
+        response.status(500).json({ error: 'Error analyzing team' });
       }
     });
 

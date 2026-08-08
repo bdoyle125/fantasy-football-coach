@@ -1,5 +1,7 @@
 import { beforeAll, afterAll, afterEach } from 'vitest';
 import { mswServer } from './msw/server';
+import { clearInjuryStatusesCache } from '../src/service-functions/getInjuryStatuses';
+import { clearDefenseRankingsCache } from '../src/service-functions/getDefenseRankings';
 
 // Runs before any test file (see vitest.config.mts's setupFiles). dotenv.config() in
 // server.ts never overrides already-set process.env vars, and this file runs before
@@ -14,5 +16,11 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 // onUnhandledRequest: 'error' makes any accidentally-unmocked external call fail the
 // test loudly instead of silently hitting live Sleeper/OpenAI endpoints.
 beforeAll(() => mswServer.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => mswServer.resetHandlers());
+afterEach(() => {
+  mswServer.resetHandlers();
+  // Both caches are module-level singletons; clear them so one test's cached response
+  // (e.g. a fetch-failure override) can't leak into the next test's assertions.
+  clearInjuryStatusesCache();
+  clearDefenseRankingsCache();
+});
 afterAll(() => mswServer.close());

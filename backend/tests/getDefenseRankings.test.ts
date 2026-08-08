@@ -58,4 +58,21 @@ describe('getDefenseRankingsForSeason', () => {
     });
     expect(rankings.get('ARI')?.rankByPosition.RB).not.toBeNull();
   });
+
+  it('caches rankings per season so a second call does not refetch all 32 teams', async () => {
+    let requestCount = 0;
+    mswServer.use(
+      http.get('https://api.sleeper.app/stats/nfl/player/:playerId', () => {
+        requestCount++;
+        return HttpResponse.json(teamDefenseStatsFixture);
+      }),
+    );
+
+    await getDefenseRankingsForSeason(TEST_SEASON);
+    const requestsAfterFirstCall = requestCount;
+    await getDefenseRankingsForSeason(TEST_SEASON);
+
+    expect(requestsAfterFirstCall).toBe(32);
+    expect(requestCount).toBe(requestsAfterFirstCall);
+  });
 });

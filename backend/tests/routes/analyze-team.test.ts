@@ -97,8 +97,9 @@ describe('POST /api/analyze-team', () => {
     expect(res.body).toEqual({ error: 'Invalid players data' });
   });
 
-  // Route's catch block returns 400 here (unlike every other route's 500) — that's
-  // existing behavior, asserted as-is rather than "fixed" as part of this test suite.
+  // The catch block only ever fires for upstream/server-side failures (Sleeper/OpenAI),
+  // since bad client input is already rejected by the explicit 400 checks above — so it
+  // returns 500, matching every other route's convention.
   it('returns a clean JSON error when the OpenAI call rejects, not a stack trace', async () => {
     mockCreate.mockRejectedValueOnce(new Error('OpenAI is down'));
 
@@ -106,7 +107,7 @@ describe('POST /api/analyze-team', () => {
       .post('/api/analyze-team')
       .send({ players: [{ name: 'Player A' }] });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Error analyzing team' });
     expect(Object.keys(res.body)).toEqual(['error']);
   });
@@ -138,7 +139,7 @@ describe('POST /api/analyze-team', () => {
       .post('/api/analyze-team')
       .send({ players: [{ name: 'Player A' }] });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Error analyzing team' });
   });
 });
