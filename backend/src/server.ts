@@ -61,6 +61,7 @@ class Server {
         }
         res.json({ tip: response.choices[0]!.message?.content });
       } catch (error) {
+        console.error('Error communicating with OpenAI API:', error);
         res.status(500).json({ error: 'Error communicating with OpenAI API' });
       }
     });
@@ -143,6 +144,7 @@ class Server {
         const playerDetail = await getPlayerDetail(playerId, state);
         res.json({ playerData: playerDetail });
       } catch (error) {
+        console.error('Error fetching player details:', error);
         res.status(500).json({ error: 'Error fetching player details' });
       }
     });
@@ -153,6 +155,7 @@ class Server {
         const leaguesData = await leaguesRes.json();
         res.json({ leagues: leaguesData });
       } catch (error) {
+        console.error('Error fetching leagues data:', error);
         res.status(500).json({ error: 'Error fetching leagues data' });
       }
     });
@@ -186,6 +189,7 @@ class Server {
         }
         response.json({ analysis: aiResponse.choices[0].message.content });
       } catch (error) {
+        console.error('Error analyzing team:', error);
         response.status(500).json({ error: 'Error analyzing team' });
       }
     });
@@ -225,6 +229,7 @@ class Server {
         }
         response.json({ recommendation: aiResponse.choices[0].message.content });
       } catch (error) {
+        console.error('Error generating start/bench recommendation:', error);
         response.status(500).json({ error: 'Error generating start/bench recommendation' });
       }
     });

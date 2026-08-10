@@ -411,6 +411,7 @@ export default defineComponent({
       }
       return this.playerDetail.weeklyStats
         .map((entry) => this.toStatRow({ week: entry.week }, entry.stats));
+    },
     historyTableRows() {
       if (!this.playerDetail) {
         return [];
