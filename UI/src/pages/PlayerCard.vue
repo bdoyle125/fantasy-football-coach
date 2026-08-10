@@ -410,9 +410,7 @@ export default defineComponent({
         return [];
       }
       return this.playerDetail.weeklyStats
-        .filter((entry) => entry.stats !== null)
         .map((entry) => this.toStatRow({ week: entry.week }, entry.stats));
-    },
     historyTableRows() {
       if (!this.playerDetail) {
         return [];
