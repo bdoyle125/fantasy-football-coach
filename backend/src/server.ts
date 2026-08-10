@@ -5,6 +5,18 @@ import OpenAI from 'openai';
 import { getTeamForOwner } from './service-functions/getTeamForOwner';
 import { getActiveLeagueSettings, setActiveLeague } from './repositories/settingsRepository';
 import { isSupabaseConfigured } from './db/supabaseClient';
+import { getSleeperState } from './service-functions/getSleeperState';
+import { getWeeklyStatsForRoster } from './service-functions/getWeeklyStatsContext';
+import { getSeasonStatsForRoster } from './service-functions/getSeasonStatsContext';
+import { getProjectionsForRoster } from './service-functions/getPlayerProjection';
+import { getDefenseRankingsForSeason } from './service-functions/getDefenseRankings';
+import { getInjuryStatuses } from './service-functions/getInjuryStatuses';
+import {
+  WEEKLY_SYSTEM_PROMPT,
+  SEASON_SYSTEM_PROMPT,
+  buildWeeklyRosterContextText,
+  buildSeasonRosterContextText,
+} from './service-functions/buildCoachContext';
 
 dotenv.config();
 
@@ -151,21 +163,29 @@ class Server {
         if (!players || !Array.isArray(players)) {
           return response.status(400).json({ error: 'Invalid players data' });
         }
-        const playerDescriptions = players.map((p: any) => {
-          return `${p.name} (${p.position || 'Unknown Position'}) from ${p.team || 'Unknown Team'} with stats: ${JSON.stringify(p.stats)}`;
-        }).join('\n');
 
-        const prompt = `Analyze the following fantasy football players and provide suggestions for improving the team:\n\n${playerDescriptions}\n\nProvide specific recommendations.`;
+        const playerIds: string[] = players.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [statsMap, injuryMap] = await Promise.all([
+          getSeasonStatsForRoster(playerIds, state),
+          getInjuryStatuses(playerIds),
+        ]);
+        const contextText = buildSeasonRosterContextText(players, statsMap, injuryMap);
+
+        const prompt = `Analyze the following fantasy football players and provide suggestions for improving the team:\n\n${contextText}\n\nProvide specific recommendations.`;
         const aiResponse = await this.openAiClient.chat.completions.create({
           model: 'gpt-5-mini',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [
+            { role: 'system', content: SEASON_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
         });
         if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
           return response.status(500).json({ error: 'No valid response from OpenAI API' });
         }
         response.json({ analysis: aiResponse.choices[0].message.content });
       } catch (error) {
-        response.status(400).json({ error: 'Error analyzing team' });
+        response.status(500).json({ error: 'Error analyzing team' });
       }
     });
 
@@ -179,15 +199,24 @@ class Server {
           return response.status(400).json({ error: 'Invalid roster data' });
         }
 
-        const rosterDescriptions = roster.map((p: any) => {
-          return `${p.name} (${p.position || 'Unknown Position'}) from ${p.team || 'Unknown Team'} with stats: ${JSON.stringify(p.stats)}`;
-        }).join('\n');
+        const rosterIds: string[] = roster.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [weeklyStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
+          getWeeklyStatsForRoster(rosterIds, state),
+          getProjectionsForRoster(rosterIds, state),
+          getDefenseRankingsForSeason(state.season),
+          getInjuryStatuses(rosterIds),
+        ]);
+        const contextText = buildWeeklyRosterContextText(roster, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
 
-        const prompt = `You are a fantasy football coach. Here is the full roster:\n\n${rosterDescriptions}\n\nShould ${player.name} (${player.position || 'Unknown Position'}) be started or benched this week? Consider the depth at their position elsewhere on the roster. Respond with a clear "Start" or "Bench" verdict followed by a brief explanation.`;
+        const prompt = `Here is the full roster:\n\n${contextText}\n\nShould ${player.name} (${player.position || 'Unknown Position'}) be started or benched this week? Consider the depth at their position elsewhere on the roster. Respond with a clear "Start" or "Bench" verdict followed by a brief explanation.`;
 
         const aiResponse = await this.openAiClient.chat.completions.create({
           model: 'gpt-5-mini',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [
+            { role: 'system', content: WEEKLY_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
         });
 
         if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
