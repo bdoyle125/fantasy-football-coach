@@ -11,6 +11,7 @@ import { getSeasonStatsForRoster } from './service-functions/getSeasonStatsConte
 import { getProjectionsForRoster } from './service-functions/getPlayerProjection';
 import { getDefenseRankingsForSeason } from './service-functions/getDefenseRankings';
 import { getInjuryStatuses } from './service-functions/getInjuryStatuses';
+import { getPlayerDetail } from './service-functions/getPlayerDetail';
 import {
   WEEKLY_SYSTEM_PROMPT,
   SEASON_SYSTEM_PROMPT,
@@ -60,6 +61,7 @@ class Server {
         }
         res.json({ tip: response.choices[0]!.message?.content });
       } catch (error) {
+        console.error('Error communicating with OpenAI API:', error);
         res.status(500).json({ error: 'Error communicating with OpenAI API' });
       }
     });
@@ -135,14 +137,15 @@ class Server {
     this.app.get('/api/player/:playerId', async (req: Request, res: Response) => {
       try {
         const playerId = req.params.playerId;
-        const playerResponse = await fetch(`https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${new Date().getFullYear() - 1}`); // TODO: handle accessing year for current season
-        if (!playerResponse.ok) {
-          return res.status(500).json({ error: 'Failed to fetch player stats from Sleeper API' });
+        if (!playerId) {
+          return res.status(400).json({ error: 'playerId is required' });
         }
-        const playerData = await playerResponse.json();
-        res.json({ playerData: playerData });
+        const state = await getSleeperState();
+        const playerDetail = await getPlayerDetail(playerId, state);
+        res.json({ playerData: playerDetail });
       } catch (error) {
-        return res.status(500).json({ error: 'Exception occurred while fetching player stats from Sleeper API' });
+        console.error('Error fetching player details:', error);
+        res.status(500).json({ error: 'Error fetching player details' });
       }
     });
 
@@ -152,6 +155,7 @@ class Server {
         const leaguesData = await leaguesRes.json();
         res.json({ leagues: leaguesData });
       } catch (error) {
+        console.error('Error fetching leagues data:', error);
         res.status(500).json({ error: 'Error fetching leagues data' });
       }
     });
@@ -185,6 +189,7 @@ class Server {
         }
         response.json({ analysis: aiResponse.choices[0].message.content });
       } catch (error) {
+        console.error('Error analyzing team:', error);
         response.status(500).json({ error: 'Error analyzing team' });
       }
     });
@@ -224,6 +229,7 @@ class Server {
         }
         response.json({ recommendation: aiResponse.choices[0].message.content });
       } catch (error) {
+        console.error('Error generating start/bench recommendation:', error);
         response.status(500).json({ error: 'Error generating start/bench recommendation' });
       }
     });

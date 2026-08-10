@@ -8,12 +8,13 @@ export const TEST_OWNER_ID = 'test-owner-id';
 export const TEST_LEAGUE_ID = 'test-league-id';
 export const TEST_PLAYER_ID = '1234';
 
-// Deliberately far outside any real calendar year so `/api/player/:playerId`'s and
-// `/api/leagues`' own `currentYear - 1` computation can never accidentally collide
-// with these and pick up a stats-context fixture meant for the new season/week flow.
+// Deliberately far outside any real calendar year so `/api/leagues`'s own
+// `currentYear - 1` computation can never accidentally collide with these and pick up
+// a stats-context fixture meant for the season/week/history flow.
 export const TEST_SEASON = '9999';
 export const TEST_WEEK = 5;
 export const TEST_PREVIOUS_SEASON = '9998';
+export const TEST_SEASON_TWO_YEARS_AGO = '9997';
 
 export const leagueUsersFixture = [
   { user_id: TEST_OWNER_ID, metadata: { team_name: 'Test Team' } },
@@ -31,6 +32,9 @@ export const playersDictFixture = {
     age: 28,
     stats: null,
     injury_status: null,
+    // An explicit veteran (no metadata.rookie_year) so rookieYear derives to null by
+    // default and history-row filtering doesn't kick in for the shared happy-path fixture.
+    years_exp: 5,
   },
 };
 
@@ -62,6 +66,11 @@ export const seasonStatsFixture = {
 export const lastSeasonStatsFixture = {
   pts_ppr: 295.68,
   gp: 14,
+};
+
+export const seasonTwoYearsAgoStatsFixture = {
+  pts_ppr: 178.4,
+  gp: 13,
 };
 
 export const leaguesFixture = [
@@ -110,10 +119,9 @@ export const handlers = [
   http.get('https://api.sleeper.app/v1/state/nfl', () => {
     return HttpResponse.json(sleeperStateFixture);
   }),
-  // Branches on `week`/`season` so the weekly/season-to-date/last-season stats flow
-  // gets distinct fixtures per slot, while requests that don't match the test
-  // season/week constants (e.g. /api/player/:playerId's own `currentYear - 1`
-  // computation) fall back to the original flat fixture unchanged. A team-abbreviation
+  // Branches on `week`/`season` so the weekly/season-to-date/last-season/history stats
+  // flow gets distinct fixtures per slot, while requests that don't match any known
+  // test season fall back to the original flat fixture unchanged. A team-abbreviation
   // playerId (used by getDefenseRankingsForSeason) short-circuits to the team-defense
   // fixture before any of that, since those calls never carry a `week` param either.
   http.get('https://api.sleeper.app/stats/nfl/player/:playerId', ({ params, request }) => {
@@ -131,6 +139,9 @@ export const handlers = [
     }
     if (season === TEST_PREVIOUS_SEASON) {
       return HttpResponse.json(lastSeasonStatsFixture);
+    }
+    if (season === TEST_SEASON_TWO_YEARS_AGO) {
+      return HttpResponse.json(seasonTwoYearsAgoStatsFixture);
     }
     return HttpResponse.json(playerStatsFixture);
   }),
