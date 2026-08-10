@@ -24,11 +24,11 @@
 
 ---
 
-## 🧭 Project Status Snapshot (as of Aug 8)
+## 🧭 Project Status Snapshot (as of Aug 9)
 
-**Done (Sessions 1–7):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Sideline" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls).
+**Done (Sessions 1–8):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Sideline" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering.
 
-**Not started:** everything from Session 8 onward.
+**Not started:** everything from Session 9 onward.
 
 > "(Optional) Log past AI analyses" was deliberately skipped this session and deferred — noted in Session 6 below.
 
@@ -43,9 +43,10 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 | Aug 6 | Thu | 🎉 Sessions 4–6 wrapped early |
 | Aug 7 | Fri | Likely Pokemon night — off |
 | **Aug 8** | Sat (today) | 🎉 Session 7 — Smarter AI Coaching wrapped same-day |
-| **Aug 9** | Sun | Session 8 — Player View Redesign (start) |
-| Aug 10 | Mon evening | Finish Session 8 |
-| **Aug 15–16** | Sat/Sun | Session 9 (Matchup preview) |
+| **Aug 9** | Sun | 🎉 Session 8 — Player View Redesign wrapped same-day (scope grew mid-session — see Session 8 notes below) |
+| Aug 10 | Mon evening | Start Session 9 (Matchup preview) — moved up from the 15th–16th slot since Aug 15 is booked |
+| Aug 15 | Sat | Booked — off |
+| Aug 16 | Sun | Finish Session 9 if needed |
 | Aug 17 | Mon evening | Start Session 10 (Dashboard polish) |
 | **Aug 22–23** | Sat/Sun | Finish Session 10 → start Sessions 11–12 (README, deploy prep, bug pass) |
 | Aug 24 | Mon evening | Continue wrap-up |
@@ -58,6 +59,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 **Priority calls, updated for the extra buffer:**
 - Session 7 (AI coaching) is done — it was the biggest, riskiest lift, and it wrapped same-day, which is exactly what freed up Aug 9–10 for the new Session 8 (Player View Redesign) without touching the kickoff date.
+- Session 8 also wrapped same-day (Aug 9), freeing up the Aug 10 Monday evening slot — Session 9 got moved up into it since Aug 15 turned out to be booked, so the Aug 15–16 weekend is down to just Sunday the 16th as a finish-up slot if Session 9 isn't done by Monday night.
 - With two extra weekends now in reserve (Aug 29–30 and Sep 5–6), **multi-league switching** is realistically attemptable if Sessions 7–10 land on schedule — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
 - **ESPN support stays post-kickoff.** The cookie-based auth (`SWID`/`espn_s2`) is the kind of thing that eats a whole weekend on its own; not worth risking the ship date over.
 - Whichever of Thu/Fri isn't a Pokemon night remains a natural overflow slot, still not relied on in the plan above.
@@ -162,15 +164,21 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 8 — Player View Redesign**
-- [ ]  Redesign the player detail page (`UI/src/pages/PlayerCard.vue`) to lead with the stats that actually drive a start/bench call — fantasy points, position rank, games played — instead of a flat, mostly-alphabetical two-column stat dump
-- [ ]  Hide or collapse stat fields that render `N/A` for a given player/position instead of always showing the full ~18-field "Base Stats" list regardless of relevance (e.g. defensive/special-teams snaps on a WR)
-- [ ]  Surface injury status inline on the page itself (the backend already tracks it via `getInjuryStatuses`), rather than only inside the AI's Start/Bench response text
-- [ ]  Move the long tail of raw box-score stats (today's "Additional Stats" card) behind a collapsible/expandable section so the page reads as a summary first, full detail on demand
-- [ ]  Pass over layout/visual hierarchy so the headline stats are scannable at a glance, not just another dense `<dl>` list
+### ▶️ **Session 8 — Player View Redesign** ✅
+- [x]  Redesign the player detail page (`UI/src/pages/PlayerCard.vue`) to lead with the stats that actually drive a start/bench call — fantasy points, position rank, games played — instead of a flat, mostly-alphabetical two-column stat dump
+- [x]  Hide or collapse stat fields that render `N/A` for a given player/position instead of always showing the full ~18-field "Base Stats" list regardless of relevance (e.g. defensive/special-teams snaps on a WR)
+- [x]  Surface injury status inline on the page itself (the backend already tracks it via `getInjuryStatuses`), rather than only inside the AI's Start/Bench response text
+- [x]  Move the long tail of raw box-score stats (today's "Additional Stats" card) behind a collapsible/expandable section so the page reads as a summary first, full detail on demand
+- [x]  Pass over layout/visual hierarchy so the headline stats are scannable at a glance, not just another dense `<dl>` list
 
 **🎯 Deliverable:** A player page that reads as a quick scouting-report summary instead of a raw stat dump, without losing access to the full data underneath
 **💸 Cost:** $0 (frontend-only, no new API/AI calls)
+
+> **Status:** Done and verified live — hit the real Sleeper API directly (catching and fixing a real bug where mocked test fixtures didn't match Sleeper's actual nested response shape) and screenshot-tested the actual UI in a browser across light/dark mode and desktop/mobile widths. 108 backend tests passing. See `UI/src/pages/PlayerCard.vue` and the backend's `getPlayerDetail.ts`/`getPlayerSeasonHistory.ts`/`getPlayerWeeklySeries.ts`/`getPlayerBio.ts`.
+>
+> Scope grew substantially beyond the original 5 items based on live feedback mid-session: added 3 years of season history and current-season weekly stats (originally scoped as "frontend-only, no new API calls" — this is no longer true, though dollar cost is still $0 since Sleeper's API is free), a season-stats fallback + label for the preseason (when the current season has no data yet), rookie-aware history filtering (hides seasons before a player's debut), and fixed a data-model gap where QB/RB/WR/TE were each missing a stat category (e.g. QB rushing, RB receiving) even though Sleeper always tracked it.
+>
+> Two deviations from the original wording, both requested directly: the "collapsible/expandable" ask became an **always-visible**, curated stat display on the Summary tab instead (once it became the primary content, a collapsed-by-default toggle just added friction) — meaning "without losing access to the full data underneath" is only partially true, since trimmed fields (rate stats, long-play records, advanced diagnostics) are no longer shown *anywhere* in the UI, not merely collapsed. (The **History** tab's per-season detail *is* collapsible — added later, as part of the extended scope.) If full raw-stat access is wanted later, a "show everything" escape hatch would be a small follow-up.
 
 ---
 
