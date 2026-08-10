@@ -11,6 +11,7 @@ import { getSeasonStatsForRoster } from './service-functions/getSeasonStatsConte
 import { getProjectionsForRoster } from './service-functions/getPlayerProjection';
 import { getDefenseRankingsForSeason } from './service-functions/getDefenseRankings';
 import { getInjuryStatuses } from './service-functions/getInjuryStatuses';
+import { getPlayerDetail } from './service-functions/getPlayerDetail';
 import {
   WEEKLY_SYSTEM_PROMPT,
   SEASON_SYSTEM_PROMPT,
@@ -135,14 +136,14 @@ class Server {
     this.app.get('/api/player/:playerId', async (req: Request, res: Response) => {
       try {
         const playerId = req.params.playerId;
-        const playerResponse = await fetch(`https://api.sleeper.app/stats/nfl/player/${playerId}?season_type=regular&season=${new Date().getFullYear() - 1}`); // TODO: handle accessing year for current season
-        if (!playerResponse.ok) {
-          return res.status(500).json({ error: 'Failed to fetch player stats from Sleeper API' });
+        if (!playerId) {
+          return res.status(400).json({ error: 'playerId is required' });
         }
-        const playerData = await playerResponse.json();
-        res.json({ playerData: playerData });
+        const state = await getSleeperState();
+        const playerDetail = await getPlayerDetail(playerId, state);
+        res.json({ playerData: playerDetail });
       } catch (error) {
-        return res.status(500).json({ error: 'Exception occurred while fetching player stats from Sleeper API' });
+        res.status(500).json({ error: 'Error fetching player details' });
       }
     });
 

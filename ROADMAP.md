@@ -274,3 +274,4 @@ This doesn't need to happen now. The main thing worth doing *today* is not hardc
 - [ ]  **Trade Analyzer:** AI rates two trade offers
 - [ ]  **Weekly Email Summaries:** "Your Coach Report" via Supabase Edge Functions
 - [ ]  **League Comparison:** Friends add their teams for ranked AI analysis
+- [ ]  **Historical Weekly Stats:** Week-by-week stat breakdowns for a player's *prior* seasons (today, weekly data only exists for the current season — `getPlayerWeeklySeries.ts` would need a season parameter, plus new backend fetching and UI)

@@ -1,4 +1,5 @@
 import { Player } from "@/types/Player";
+import { PlayerDetail, WeeklyStatEntry, SeasonHistoryEntry } from "@/types/PlayerDetail";
 import { DefenseSpecialTeamsStats } from "@/types/PlayerStats/DefenseSpecialTeamsStats";
 import { KickerStats } from "@/types/PlayerStats/KickerStats";
 import { PlayerStats } from "@/types/PlayerStats/PlayerStats";
@@ -9,7 +10,31 @@ import { WideReceiverStats } from "@/types/PlayerStats/WideReceiverStats";
 
 export class PlayerService {
 
-    async fetchPlayerDetails(playerId: string): Promise<Player> {
+    private statsFactory(position: string | null): (raw: Record<string, number> | null) => PlayerStats | null {
+        return (raw) => {
+            if (!raw) {
+                return null;
+            }
+            switch (position) {
+                case 'QB':
+                    return new QuarterbackStats(raw);
+                case 'RB':
+                    return new RunningBackStats(raw);
+                case 'WR':
+                    return new WideReceiverStats(raw);
+                case 'TE':
+                    return new TightEndStats(raw);
+                case 'K':
+                    return new KickerStats(raw);
+                case 'DEF':
+                    return new DefenseSpecialTeamsStats(raw);
+                default:
+                    return new PlayerStats(raw);
+            }
+        };
+    }
+
+    async fetchPlayerDetails(playerId: string): Promise<PlayerDetail> {
         const api = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${api}api/player/${playerId}`, {
             method: 'GET',
@@ -22,42 +47,35 @@ export class PlayerService {
         }
         const data = await response.json();
         const playerData = data.playerData;
+        const buildStats = this.statsFactory(playerData.position);
 
-        // Assuming playerStats is part of the response
-        const position = playerData.player.position;
-        let playerStats: PlayerStats;
-        switch (position) {
-            case 'QB':
-                playerStats = new QuarterbackStats(playerData.stats);
-                break;
-            case 'RB':
-                playerStats = new RunningBackStats(playerData.stats);
-                break;
-            case 'WR':
-                playerStats = new WideReceiverStats(playerData.stats);
-                break;
-            case 'TE':
-                playerStats = new TightEndStats(playerData.stats);
-                break;
-            case 'K':
-                playerStats = new KickerStats(playerData.stats);
-                break;
-            case 'DEF':
-                playerStats = new DefenseSpecialTeamsStats(playerData.stats);
-                break;
-            default:
-                playerStats = new PlayerStats(playerData.stats);
-        }
-
-        // Return a Player instance
-        return new Player(
-            playerData.player_id,
-            playerData.player.first_name + ' ' + playerData.player.last_name,
+        const player = new Player(
+            playerData.playerId,
+            playerData.name,
             playerData.team,
-            playerData.player.position,
-            playerData.player.age,
-            playerStats
+            playerData.position,
+            playerData.age,
+            buildStats(playerData.seasonStats) ?? new PlayerStats({}),
         );
 
+        const weeklyStats: WeeklyStatEntry[] = playerData.weeklyStats.map((entry: { week: number; stats: Record<string, number> | null }) => ({
+            week: entry.week,
+            stats: buildStats(entry.stats),
+        }));
+
+        const history: SeasonHistoryEntry[] = playerData.history.map((entry: { season: string; stats: Record<string, number> | null }) => ({
+            season: entry.season,
+            stats: buildStats(entry.stats),
+        }));
+
+        return new PlayerDetail(
+            player,
+            playerData.injuryStatus,
+            playerData.season,
+            playerData.week,
+            playerData.seasonStatsSeason,
+            weeklyStats,
+            history,
+        );
     }
 }
