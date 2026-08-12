@@ -219,11 +219,14 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 ---
 
 ### ▶️ **Sessions 11–12 — Wrap-Up & Stretch**
+- [ ]  Add Logo & Header to Website
+- [ ]  "Ask Coach Anything" chat feature
+- [ ]  Multi-league switching — see below
+- [ ]  Sidebar to choose from multiple screens (Roster, Leagues, Ask Coach Anything, Profile, etc)
 - [ ]  (Optional) Add Supabase Auth login
-- [ ]  (Optional) "Ask Coach Anything" chat feature
 - [ ]  (Optional) "Season Summary" AI report
-- [ ]  (Stretch) Multi-league switching — see below
 - [ ]  (Stretch) ESPN Fantasy support — see below
+- [ ]  (Stretch) Adding a league through the UI
 - [ ]  Write README and final deployment
 
 **🎯 Deliverable:** Full working app + documentation
