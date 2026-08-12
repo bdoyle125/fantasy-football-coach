@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import { http, HttpResponse } from 'msw';
 import { mswServer } from '../msw/server';
-import { TEST_OWNER_ID, TEST_LEAGUE_ID, TEST_PLAYER_ID, projectionFixture } from '../msw/handlers';
+import { TEST_OWNER_ID, TEST_LEAGUE_ID, TEST_PLAYER_ID } from '../msw/handlers';
 import { mockGetActiveLeagueSettings, mockSetActiveLeague } from '../mocks/settingsRepository';
 
 // Must run before `createApp` is imported, same rationale as the OpenAI mock: register
@@ -55,7 +55,6 @@ describe('GET /api/myteam', () => {
     });
     expect(res.body.players).toHaveLength(1);
     expect(res.body.players[0].id).toBe(TEST_PLAYER_ID);
-    expect(res.body.players[0].projectedPoints).toBe(projectionFixture.stats.pts_ppr);
   });
 
   it('falls back to env vars when no active league is configured in Supabase', async () => {

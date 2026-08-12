@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import { http, HttpResponse } from 'msw';
 import { mswServer } from '../msw/server';
-import { TEST_OWNER_ID, TEST_LEAGUE_ID, TEST_PLAYER_ID, TEST_OPPONENT_PLAYER_ID, emptyMatchupsFixture, byeMatchupsFixture, projectionFixture } from '../msw/handlers';
+import { TEST_OWNER_ID, TEST_LEAGUE_ID, TEST_PLAYER_ID, TEST_OPPONENT_PLAYER_ID, emptyMatchupsFixture } from '../msw/handlers';
 import { mockGetActiveLeagueSettings, mockSetActiveLeague } from '../mocks/settingsRepository';
 
 // Must run before `createApp` is imported, same rationale as myteam.test.ts.
@@ -47,8 +47,6 @@ describe('GET /api/matchup', () => {
     expect(res.body.status).toBe('ok');
     expect(res.body.myTeam.players[0].id).toBe(TEST_PLAYER_ID);
     expect(res.body.opponentTeam.players[0].id).toBe(TEST_OPPONENT_PLAYER_ID);
-    expect(res.body.myTeam.players[0].projectedPoints).toBe(projectionFixture.stats.pts_ppr);
-    expect(res.body.opponentTeam.players[0].projectedPoints).toBe(projectionFixture.stats.pts_ppr);
   });
 
   it('falls back to env vars when no active league is configured in Supabase', async () => {
@@ -110,20 +108,5 @@ describe('GET /api/matchup', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('unavailable');
-  });
-
-  it('attaches projected points to myTeam on a bye week too', async () => {
-    mockGetActiveLeagueSettings.mockResolvedValueOnce(null);
-    mswServer.use(
-      http.get('https://api.sleeper.app/v1/league/:leagueId/matchups/:week', () => {
-        return HttpResponse.json(byeMatchupsFixture);
-      }),
-    );
-
-    const res = await request(app).get('/api/matchup');
-
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe('bye');
-    expect(res.body.myTeam.players[0].projectedPoints).toBe(projectionFixture.stats.pts_ppr);
   });
 });

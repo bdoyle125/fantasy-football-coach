@@ -26,7 +26,7 @@
 
 ## 🧭 Project Status Snapshot (as of Aug 11)
 
-**Done (Sessions 1–10):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Frank" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering, fantasy-matchup opponent resolution + AI "Matchup Preview" page, dashboard stat cards (heuristic Team Strength/Player to Watch + AI-reused Trade Suggestion), and a mobile/loading/error-state polish pass across all three pages.
+**Done (Sessions 1–10):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Frank" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering, fantasy-matchup opponent resolution + AI "Matchup Preview" page, dashboard stat cards (heuristic Team Strength/Player to Watch + AI-reused Trade Suggestion), a mobile/loading/error-state polish pass across all three pages, a real Session-7 stats-unwrapping bug fix plus a last-season fallback for stats/defense rankings, and an expanded `/api/analyze-team` (now includes projection/matchup data too).
 
 **Not started:** everything from Sessions 11–12 onward.
 
@@ -42,13 +42,13 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 | --- | --- | --- |
 | Aug 6 | Thu | 🎉 Sessions 4–6 wrapped early |
 | Aug 7 | Fri | Likely Pokemon night — off |
-| **Aug 8** | Sat (today) | 🎉 Session 7 — Smarter AI Coaching wrapped same-day |
+| **Aug 8** | Sat | 🎉 Session 7 — Smarter AI Coaching wrapped same-day |
 | **Aug 9** | Sun | 🎉 Session 8 — Player View Redesign wrapped same-day (scope grew mid-session — see Session 8 notes below) |
-| Aug 10 | Mon evening | Start Session 9 (Matchup preview) — moved up from the 15th–16th slot since Aug 15 is booked |
-| Aug 15 | Sat | Booked — off |
-| Aug 16 | Sun | Finish Session 9 if needed |
-| Aug 17 | Mon evening | Start Session 10 (Dashboard polish) |
-| **Aug 22–23** | Sat/Sun | Finish Session 10 → start Sessions 11–12 (README, deploy prep, bug pass) |
+| **Aug 10–11** | Mon evening–Tue | 🎉 Sessions 9 & 10 (Matchup Preview + Dashboard Polish, merged into one build) wrapped, plus a same-day follow-up pass — AI data-quality bug fixes, expanded `/api/analyze-team`, "Coach Frank" rename, completed Bruno collection (see Session 9 notes below) |
+| Aug 15 | Sat | Freed up — was reserved as a Session 9 finish-up buffer, no longer needed |
+| Aug 16 | Sun | Freed up — extra slack; available for an early start on Sessions 11–12 or a stretch goal |
+| Aug 17 | Mon evening | Start Sessions 11–12 (README, deploy prep, bug pass) |
+| **Aug 22–23** | Sat/Sun | Continue/finish Sessions 11–12 |
 | Aug 24 | Mon evening | Continue wrap-up |
 | **Aug 29–30** | Sat/Sun | Finish wrap-up. First real shot at a stretch goal if things stay smooth (see priority notes) |
 | Aug 31 | Mon evening | Buffer |
@@ -57,10 +57,11 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 | Sep 8 | Tue | Final smoke test after the 7pm obligation |
 | **Sep 9** | Wed | 🏁 Kickoff — app should be live before 8:20pm ET |
 
-**Priority calls, updated for the extra buffer:**
+**Priority calls, updated now that Sessions 7–10 are all done:**
 - Session 7 (AI coaching) is done — it was the biggest, riskiest lift, and it wrapped same-day, which is exactly what freed up Aug 9–10 for the new Session 8 (Player View Redesign) without touching the kickoff date.
-- Session 8 also wrapped same-day (Aug 9), freeing up the Aug 10 Monday evening slot — Session 9 got moved up into it since Aug 15 turned out to be booked, so the Aug 15–16 weekend is down to just Sunday the 16th as a finish-up slot if Session 9 isn't done by Monday night.
-- With two extra weekends now in reserve (Aug 29–30 and Sep 5–6), **multi-league switching** is realistically attemptable if Sessions 7–10 land on schedule — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
+- Session 8 also wrapped same-day (Aug 9). Sessions 9 and 10 (merged) then wrapped by Aug 11, including a same-day follow-up pass beyond the original scope — which frees the *entire* Aug 15–16 weekend that had been reserved as a Session 9 finish-up buffer.
+- With Sessions 7–10 done ahead of the per-session pacing, Sessions 11–12 can start as early as Aug 15–16 instead of waiting for Aug 17, if there's appetite to get further ahead rather than bank the slack.
+- With three full weekends now in reserve (some mix of Aug 15–16, Aug 29–30, and Sep 5–6, depending how much of Sessions 11–12 gets pulled forward), **multi-league switching** is realistically attemptable — it's the lighter of the two stretch goals since it's mostly schema + UI, no external auth quirks.
 - **ESPN support stays post-kickoff.** The cookie-based auth (`SWID`/`espn_s2`) is the kind of thing that eats a whole weekend on its own; not worth risking the ship date over.
 - Whichever of Thu/Fri isn't a Pokemon night remains a natural overflow slot, still not relied on in the plan above.
 
@@ -189,7 +190,17 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 **🎯 Deliverable:** Head-to-head preview card
 **💸 Cost:** ~$0.50–1 per use
 
-> **Status:** Done and verified live against the real (already-drafted) 2026 league — `GET /api/matchup` resolves the current-week opponent via Sleeper's `matchups/{week}` endpoint (new: `backend/src/service-functions/getMatchupForOwner.ts`), returning an `ok`/`bye`/`unavailable` business state rather than erroring on bye weeks or a not-yet-scheduled season. `POST /api/matchup-preview` feeds both rosters' weekly stats/projections/defense rankings/injury status into a new `MATCHUP_SYSTEM_PROMPT` (`buildCoachContext.ts`) for a head-to-head "Coach Frank" preview ending in a labeled Predicted Winner line. New frontend page `UI/src/pages/MatchupPreview.vue`, reached via a "This Week's Matchup" button on the roster page. 135 backend tests passing (7 new test files/additions for this session + Session 10 combined).
+> **Status:** Done and verified live against the real (already-drafted) 2026 league — `GET /api/matchup` resolves the current-week opponent via Sleeper's `matchups/{week}` endpoint (new: `backend/src/service-functions/getMatchupForOwner.ts`), returning an `ok`/`bye`/`unavailable` business state rather than erroring on bye weeks or a not-yet-scheduled season. `POST /api/matchup-preview` feeds both rosters' weekly stats/projections/defense rankings/injury status into a new `MATCHUP_SYSTEM_PROMPT` (`buildCoachContext.ts`) for a head-to-head "Coach Frank" preview ending in a labeled Predicted Winner line. New frontend page `UI/src/pages/MatchupPreview.vue`, reached via a "This Week's Matchup" button on the roster page. 136 backend tests passing.
+>
+> **Follow-up work (same day):**
+> - Found and fixed a real bug dating back to Session 7: `getSeasonStatsContext.ts`/`getWeeklyStatsContext.ts` never unwrapped Sleeper's `.stats` sub-field the way `getPlayerSeasonHistory.ts` already did, so `SEASON_STATS`/`LAST_SEASON_STATS`/`WEEKLY_STATS` had silently been the wrong shape (a wrapped object instead of a flat stat line) the whole time — this broke every `pts_ppr`/`gp` lookup downstream, including the new dashboard cards. Fixed to match the established `extractStatsBlob` pattern. Also fixed `getSeasonStatsContext.ts` querying last season with the *current* season's `season_type` (e.g. `"pre"`) instead of `"regular"`.
+> - Added `getDefenseRankingsWithFallback`: falls back to last season's defense rankings whenever the current season has zero games played yet (all-null), used everywhere matchup difficulty is fetched (`start-or-bench`, `matchup-preview`, `dashboard-insights`, `analyze-team`).
+> - `POST /api/analyze-team` now also receives this week's projection + defense-matchup data (previously season-only stats/injury, per the original Session 7 design) — its prompt explains how to weigh that alongside season stats without over-indexing on one week, is told never to end with a question (it's a one-shot report, the user can't reply), and its `TRADE SUGGESTION:` line is now name(s)-only instead of a paragraph.
+> - Team Strength now falls back to last season's per-player stats when the current season has none yet, with an "Includes last season's stats" label (mirrors `PlayerCard.vue`'s existing "Showing {season} stats" pattern).
+> - Renamed the AI persona "Coach Sideline" → "Coach Frank" everywhere (prompt text, browser tab title, docs).
+> - Filled out the Bruno collection (`bruno-calls/`) to cover all 12 backend routes — 6 were missing a saved request.
+>
+> **Tried and reverted:** a "Projected Points (PPR)" column was briefly added to both roster tables (`Player.projectedPoints`, populated by pulling `pts_ppr` off Sleeper's `/projections/nfl/player/:id` response), then removed — it looks like Sleeper calculates that number internally rather than exposing a simple pass-through value, so the naive read wasn't trustworthy. Backed out entirely (type field, backend wiring, tests, and the UI columns). Worth revisiting later if a reliable source for it turns up.
 
 ---
 

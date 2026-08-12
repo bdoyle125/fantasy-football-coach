@@ -142,15 +142,6 @@
             :sortable="true"
             :filter="true"
           />
-          <Column
-            field="projectedPoints"
-            header="Projected Points (PPR)"
-            :sortable="true"
-          >
-            <template #body="slotProps">
-              {{ slotProps.data.projectedPoints ?? '--' }}
-            </template>
-          </Column>
         </DataTable>
       </div>
       <PrimeDialog

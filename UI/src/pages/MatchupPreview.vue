@@ -53,14 +53,6 @@
                   field="team"
                   header="Team"
                 />
-                <Column
-                  field="projectedPoints"
-                  header="Projected Points (PPR)"
-                >
-                  <template #body="slotProps">
-                    {{ slotProps.data.projectedPoints ?? '--' }}
-                  </template>
-                </Column>
               </DataTable>
             </div>
           </template>
@@ -89,14 +81,6 @@
                       field="team"
                       header="Team"
                     />
-                    <Column
-                      field="projectedPoints"
-                      header="Projected Points (PPR)"
-                    >
-                      <template #body="slotProps">
-                        {{ slotProps.data.projectedPoints ?? '--' }}
-                      </template>
-                    </Column>
                   </DataTable>
                 </div>
               </template>
@@ -122,14 +106,6 @@
                       field="team"
                       header="Team"
                     />
-                    <Column
-                      field="projectedPoints"
-                      header="Projected Points (PPR)"
-                    >
-                      <template #body="slotProps">
-                        {{ slotProps.data.projectedPoints ?? '--' }}
-                      </template>
-                    </Column>
                   </DataTable>
                 </div>
               </template>

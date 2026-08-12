@@ -13,7 +13,6 @@ import { getProjectionsForRoster } from './service-functions/getPlayerProjection
 import { getDefenseRankingsWithFallback } from './service-functions/getDefenseRankings';
 import { getInjuryStatuses } from './service-functions/getInjuryStatuses';
 import { getPlayerDetail } from './service-functions/getPlayerDetail';
-import { attachProjectedPoints } from './service-functions/attachProjectedPoints';
 import { computeTeamStrength, computePlayerToWatch } from './service-functions/computeDashboardInsights';
 import {
   WEEKLY_SYSTEM_PROMPT,
@@ -94,8 +93,6 @@ class Server {
           return res.status(400).json({ error: 'Missing Sleeper league or owner ID in database or environment variables' });
         }
         const myTeam = await getTeamForOwner(leagueId, ownerId);
-        const state = await getSleeperState();
-        await attachProjectedPoints(myTeam.players, state);
         res.json(myTeam);
       } catch (error) {
         console.error('Error fetching team data:', error);
@@ -127,14 +124,6 @@ class Server {
         }
         const state = await getSleeperState();
         const matchup = await getMatchupForOwner(leagueId, ownerId, state);
-        if (matchup.status === 'ok') {
-          await Promise.all([
-            attachProjectedPoints(matchup.myTeam.players, state),
-            attachProjectedPoints(matchup.opponentTeam.players, state),
-          ]);
-        } else if (matchup.status === 'bye') {
-          await attachProjectedPoints(matchup.myTeam.players, state);
-        }
         res.json(matchup);
       } catch (error) {
         console.error('Error fetching matchup data:', error);
