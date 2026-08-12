@@ -133,7 +133,6 @@ import { defineComponent } from "vue";
 import { MatchupService } from "../service/MatchupService";
 import { MatchupResult } from "../types/Matchup";
 import { Card, Button as PrimeButton, Dialog as PrimeDialog, DataTable, Column } from "primevue";
-import { RouterLink } from "vue-router";
 import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ErrorState from "../components/ErrorState.vue";
 import { sortPlayersByPosition } from "../utils/sortPlayersByPosition";
@@ -154,7 +153,6 @@ export default defineComponent({
     PrimeDialog,
     DataTable,
     Column,
-    RouterLink,
     LoadingSpinner,
     ErrorState,
   },
