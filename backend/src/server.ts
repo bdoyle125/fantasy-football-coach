@@ -3,20 +3,24 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { getTeamForOwner } from './service-functions/getTeamForOwner';
+import { getMatchupForOwner } from './service-functions/getMatchupForOwner';
 import { getActiveLeagueSettings, setActiveLeague } from './repositories/settingsRepository';
 import { isSupabaseConfigured } from './db/supabaseClient';
 import { getSleeperState } from './service-functions/getSleeperState';
 import { getWeeklyStatsForRoster } from './service-functions/getWeeklyStatsContext';
 import { getSeasonStatsForRoster } from './service-functions/getSeasonStatsContext';
 import { getProjectionsForRoster } from './service-functions/getPlayerProjection';
-import { getDefenseRankingsForSeason } from './service-functions/getDefenseRankings';
+import { getDefenseRankingsWithFallback } from './service-functions/getDefenseRankings';
 import { getInjuryStatuses } from './service-functions/getInjuryStatuses';
 import { getPlayerDetail } from './service-functions/getPlayerDetail';
+import { computeTeamStrength, computePlayerToWatch } from './service-functions/computeDashboardInsights';
 import {
   WEEKLY_SYSTEM_PROMPT,
   SEASON_SYSTEM_PROMPT,
+  MATCHUP_SYSTEM_PROMPT,
   buildWeeklyRosterContextText,
   buildSeasonRosterContextText,
+  buildMatchupContextText,
 } from './service-functions/buildCoachContext';
 
 dotenv.config();
@@ -96,6 +100,37 @@ class Server {
       }
     });
 
+    this.app.get('/api/matchup', async (req: Request, res: Response) => {
+      try {
+        let settings = null;
+        if (isSupabaseConfigured()) {
+          settings = await getActiveLeagueSettings();
+        }
+        let leagueId: string | undefined;
+        let ownerId: string | undefined;
+        if (settings) {
+          if (settings.provider !== 'sleeper') {
+            return res.status(501).json({ error: `Provider "${settings.provider}" is not supported yet` });
+          }
+          leagueId = settings.providerLeagueId;
+          ownerId = settings.providerOwnerId;
+        } else {
+          console.warn('No active league in Supabase; falling back to SLEEPER_LEAGUE_ID/SLEEPER_OWNER_ID.');
+          leagueId = process.env.SLEEPER_LEAGUE_ID;
+          ownerId = process.env.SLEEPER_OWNER_ID;
+        }
+        if (!leagueId || !ownerId) {
+          return res.status(400).json({ error: 'Missing Sleeper league or owner ID in database or environment variables' });
+        }
+        const state = await getSleeperState();
+        const matchup = await getMatchupForOwner(leagueId, ownerId, state);
+        res.json(matchup);
+      } catch (error) {
+        console.error('Error fetching matchup data:', error);
+        res.status(500).json({ error: 'Error fetching matchup data' });
+      }
+    });
+
     this.app.get('/api/settings', async (req: Request, res: Response) => {
       try {
         const settings = await getActiveLeagueSettings();
@@ -170,11 +205,13 @@ class Server {
 
         const playerIds: string[] = players.filter((p: any) => p && p.id).map((p: any) => p.id);
         const state = await getSleeperState();
-        const [statsMap, injuryMap] = await Promise.all([
+        const [statsMap, injuryMap, projectionMap, defenseRankings] = await Promise.all([
           getSeasonStatsForRoster(playerIds, state),
           getInjuryStatuses(playerIds),
+          getProjectionsForRoster(playerIds, state),
+          getDefenseRankingsWithFallback(state),
         ]);
-        const contextText = buildSeasonRosterContextText(players, statsMap, injuryMap);
+        const contextText = buildSeasonRosterContextText(players, statsMap, injuryMap, projectionMap, defenseRankings);
 
         const prompt = `Analyze the following fantasy football players and provide suggestions for improving the team:\n\n${contextText}\n\nProvide specific recommendations.`;
         const aiResponse = await this.openAiClient.chat.completions.create({
@@ -209,7 +246,7 @@ class Server {
         const [weeklyStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
           getWeeklyStatsForRoster(rosterIds, state),
           getProjectionsForRoster(rosterIds, state),
-          getDefenseRankingsForSeason(state.season),
+          getDefenseRankingsWithFallback(state),
           getInjuryStatuses(rosterIds),
         ]);
         const contextText = buildWeeklyRosterContextText(roster, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
@@ -231,6 +268,83 @@ class Server {
       } catch (error) {
         console.error('Error generating start/bench recommendation:', error);
         response.status(500).json({ error: 'Error generating start/bench recommendation' });
+      }
+    });
+
+    this.app.post('/api/dashboard-insights', async (req: Request, response: Response) => {
+      try {
+        const players = req.body.players;
+        if (!players || !Array.isArray(players)) {
+          return response.status(400).json({ error: 'Invalid players data' });
+        }
+
+        const playerIds: string[] = players.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [seasonStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
+          getSeasonStatsForRoster(playerIds, state),
+          getProjectionsForRoster(playerIds, state),
+          getDefenseRankingsWithFallback(state),
+          getInjuryStatuses(playerIds),
+        ]);
+
+        const teamStrength = computeTeamStrength(players, seasonStatsMap);
+        const playerToWatch = computePlayerToWatch(players, projectionMap, defenseRankings, injuryMap);
+
+        response.json({ teamStrength, playerToWatch });
+      } catch (error) {
+        console.error('Error computing dashboard insights:', error);
+        response.status(500).json({ error: 'Error computing dashboard insights' });
+      }
+    });
+
+    this.app.post('/api/matchup-preview', async (req: Request, response: Response) => {
+      try {
+        const { myTeam, opponentTeam } = req.body;
+        if (!myTeam || !Array.isArray(myTeam.players) || myTeam.players.length === 0) {
+          return response.status(400).json({ error: 'Invalid myTeam data' });
+        }
+        if (!opponentTeam || !Array.isArray(opponentTeam.players) || opponentTeam.players.length === 0) {
+          return response.status(400).json({ error: 'Invalid opponentTeam data' });
+        }
+
+        const combinedPlayerIds: string[] = [...myTeam.players, ...opponentTeam.players]
+          .filter((p: any) => p && p.id)
+          .map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [weeklyStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
+          getWeeklyStatsForRoster(combinedPlayerIds, state),
+          getProjectionsForRoster(combinedPlayerIds, state),
+          getDefenseRankingsWithFallback(state),
+          getInjuryStatuses(combinedPlayerIds),
+        ]);
+        const contextText = buildMatchupContextText(
+          myTeam.name || 'Your Team',
+          myTeam.players,
+          opponentTeam.name || 'Opponent Team',
+          opponentTeam.players,
+          weeklyStatsMap,
+          projectionMap,
+          defenseRankings,
+          injuryMap,
+        );
+
+        const prompt = `Here is this week's head-to-head fantasy matchup:\n\n${contextText}\n\nPreview this matchup and predict a winner.`;
+
+        const aiResponse = await this.openAiClient.chat.completions.create({
+          model: 'gpt-5-mini',
+          messages: [
+            { role: 'system', content: MATCHUP_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
+        });
+
+        if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
+          return response.status(500).json({ error: 'No valid response from OpenAI API' });
+        }
+        response.json({ preview: aiResponse.choices[0].message.content });
+      } catch (error) {
+        console.error('Error generating matchup preview:', error);
+        response.status(500).json({ error: 'Error generating matchup preview' });
       }
     });
 

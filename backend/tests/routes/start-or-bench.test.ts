@@ -35,7 +35,7 @@ describe('POST /api/start-or-bench', () => {
     expect(res.body).toEqual({ recommendation: 'Start him, easy matchup.' });
   });
 
-  it('sends the weekly-scoped Coach Sideline system prompt ahead of the roster-context user message', async () => {
+  it('sends the weekly-scoped Coach Frank system prompt ahead of the roster-context user message', async () => {
     mockCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'Start him, easy matchup.' } }],
     });
