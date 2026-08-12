@@ -102,7 +102,7 @@ Added in Session 6 (migration: `backend/db/migrations/0001_init.sql`) to persist
 
 1. `backend/`: copy env vars into `backend/.env` (including the Supabase ones — see `backend/.env.example`), run the SQL in `backend/db/migrations/0001_init.sql` against the Supabase project once, then `npm run db:seed` once to migrate `SLEEPER_LEAGUE_ID`/`SLEEPER_OWNER_ID` into the DB, then `npm run dev` (serves on port 5000).
 2. `UI/`: `npm run dev` (Vite dev server; proxies `/api/*` calls to the backend).
-3. `bruno-calls/` holds a Bruno collection (`fantasy-football-coach`) with saved requests against `http://localhost:5000` for manually exercising the API: **OpenAI Test** (`POST /api/openai-test`), **My Team** (`GET /api/myteam`), **Analyze Team** (`POST /api/analyze-team`), **Leagues** (`GET /api/leagues`), **Get Settings** (`GET /api/settings`), **Update Settings** (`PUT /api/settings`). There's no saved request for `GET /` or `GET /api/player/:playerId`.
+3. `bruno-calls/` holds a Bruno collection (`fantasy-football-coach`) with saved requests against `http://localhost:5000` for manually exercising the API — one request per route: **Health Check** (`GET /`), **OpenAI Test** (`POST /api/openai-test`), **My Team** (`GET /api/myteam`), **Matchup** (`GET /api/matchup`), **Get Settings** (`GET /api/settings`), **Update Settings** (`PUT /api/settings`), **Player Detail** (`GET /api/player/:playerId`), **Leagues** (`GET /api/leagues`), **Analyze Team** (`POST /api/analyze-team`), **Start or Bench** (`POST /api/start-or-bench`), **Dashboard Insights** (`POST /api/dashboard-insights`), **Matchup Preview** (`POST /api/matchup-preview`).
 
 ## Notes for future work
 
@@ -150,8 +150,31 @@ if (matched.relatedSessionId) {
   session = sessions.find((s) => s.sessionId === matched.relatedSessionId) ?? null;
 }
 
+// Wrong — multi-line ternary narrowing a value via typeof
+const projectedPoints = typeof projection?.projectedStats?.pts_ppr === "number"
+  ? projection.projectedStats.pts_ppr
+  : null;
+
+// Correct — same logic as if/else
+let projectedPoints: number | null = null;
+if (typeof projection?.projectedStats?.pts_ppr === "number") {
+  projectedPoints = projection.projectedStats.pts_ppr;
+}
+
 // Wrong — nested ternary
 const tier = score > 90 ? "gold" : score > 50 ? "silver" : "bronze";
+```
+
+**No multi-line boolean (`&&`/`||`) expressions.** A boolean/logical expression assigned to a variable should stay on one line, even if that makes the line long — don't split each `&&`/`||` clause onto its own line.
+
+```ts
+// Wrong — logical expression split across lines
+const isBetter = !best
+  || rank < best.defenseRank
+  || (rank === best.defenseRank && (projectedPoints ?? 0) > (best.projectedPoints ?? 0));
+
+// Correct — kept on one line
+const isBetter = !best || rank < best.defenseRank || (rank === best.defenseRank && (projectedPoints ?? 0) > (best.projectedPoints ?? 0));
 ```
 
 **No ternaries that conditionally call a function (especially an `async`/`await`'d one) instead of selecting between two plain values.** A ternary should pick between two already-available values. If either branch invokes a function — particularly one with side effects like a DB/network call — the conditional is doing control flow, not value selection, and belongs in an `if`/`else` even if it fits on one line.

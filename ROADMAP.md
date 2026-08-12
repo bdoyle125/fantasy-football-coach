@@ -24,11 +24,11 @@
 
 ---
 
-## 🧭 Project Status Snapshot (as of Aug 9)
+## 🧭 Project Status Snapshot (as of Aug 11)
 
-**Done (Sessions 1–8):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Sideline" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering.
+**Done (Sessions 1–10):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Frank" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering, fantasy-matchup opponent resolution + AI "Matchup Preview" page, dashboard stat cards (heuristic Team Strength/Player to Watch + AI-reused Trade Suggestion), and a mobile/loading/error-state polish pass across all three pages.
 
-**Not started:** everything from Session 9 onward.
+**Not started:** everything from Sessions 11–12 onward.
 
 > "(Optional) Log past AI analyses" was deliberately skipped this session and deferred — noted in Session 6 below.
 
@@ -160,7 +160,7 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 **🎯 Deliverable:** Personable "Coach AI" responses grounded in real weekly + historical stats, instructed to think past the raw numbers
 **💸 Cost:** ~$3–5 cumulative (prompts get bigger with more stats)
 
-> **Status:** Done and test-covered (80 backend tests passing) — see `backend/src/service-functions/getWeeklyStatsContext.ts`, `getSeasonStatsContext.ts`, `getPlayerProjection.ts`, `getDefenseRankings.ts`, and the "Coach Sideline" persona/prompts in `buildCoachContext.ts`. One deviation from the original wording: rather than one shared context blob per player, the context is now deliberately scoped per route — `/api/start-or-bench` gets weekly stats, projection, and opponent/defense ranking (no season data), while `/api/analyze-team` gets season + last-season stats (no matchup data) — since one is a single-week decision and the other is a season-long team-construction question. Only the optional web-search/retrieval tool call remains undone.
+> **Status:** Done and test-covered (80 backend tests passing) — see `backend/src/service-functions/getWeeklyStatsContext.ts`, `getSeasonStatsContext.ts`, `getPlayerProjection.ts`, `getDefenseRankings.ts`, and the "Coach Frank" persona/prompts in `buildCoachContext.ts`. One deviation from the original wording: rather than one shared context blob per player, the context is now deliberately scoped per route — `/api/start-or-bench` gets weekly stats, projection, and opponent/defense ranking (no season data), while `/api/analyze-team` gets season + last-season stats (no matchup data) — since one is a single-week decision and the other is a season-long team-construction question. Only the optional web-search/retrieval tool call remains undone.
 
 ---
 
@@ -182,22 +182,28 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Session 9 — Matchup of the Session**
-- [ ]  Display your upcoming opponent's roster
-- [ ]  Ask AI for "Matchup Preview" summary + predicted winner
+### ▶️ **Session 9 — Matchup of the Session** ✅
+- [x]  Display your upcoming opponent's roster
+- [x]  Ask AI for "Matchup Preview" summary + predicted winner
 
 **🎯 Deliverable:** Head-to-head preview card
 **💸 Cost:** ~$0.50–1 per use
 
+> **Status:** Done and verified live against the real (already-drafted) 2026 league — `GET /api/matchup` resolves the current-week opponent via Sleeper's `matchups/{week}` endpoint (new: `backend/src/service-functions/getMatchupForOwner.ts`), returning an `ok`/`bye`/`unavailable` business state rather than erroring on bye weeks or a not-yet-scheduled season. `POST /api/matchup-preview` feeds both rosters' weekly stats/projections/defense rankings/injury status into a new `MATCHUP_SYSTEM_PROMPT` (`buildCoachContext.ts`) for a head-to-head "Coach Frank" preview ending in a labeled Predicted Winner line. New frontend page `UI/src/pages/MatchupPreview.vue`, reached via a "This Week's Matchup" button on the roster page. 135 backend tests passing (7 new test files/additions for this session + Session 10 combined).
+
 ---
 
-### ▶️ **Session 10 — Dashboard Polish**
-- [ ]  Add stat cards: Team Strength | Player to Watch | Trade Suggestion
-- [ ]  Improve mobile layout + styling
-- [ ]  Add loading spinners + error states
+### ▶️ **Session 10 — Dashboard Polish** ✅
+- [x]  Add stat cards: Team Strength | Player to Watch | Trade Suggestion
+- [x]  Improve mobile layout + styling
+- [x]  Add loading spinners + error states
 
 **🎯 Deliverable:** Clean, responsive dashboard
 **💸 Cost:** ~$10 total usage
+
+> **Status:** Done — merged into the same session as Session 9 since the matchup page needed new shared UI (see deviation note below). Team Strength and Player to Watch are computed heuristically with zero added AI cost (new `POST /api/dashboard-insights`, `backend/src/service-functions/computeDashboardInsights.ts`) and auto-load on every dashboard visit; Trade Suggestion instead reuses the existing `/api/analyze-team` call (one added line in `SEASON_SYSTEM_PROMPT` asking for a labeled `TRADE SUGGESTION:` section) and stays gated behind the existing "Analyze Team" button so it never fires an extra paid call on its own. New shared `UI/src/components/LoadingSpinner.vue`/`ErrorState.vue` (extracted from duplicated markup, now used on all three pages) give every fetch a real error state with retry for the first time — previously failures only logged to the console. Mobile pass: all `DataTable`s wrapped in `.table-responsive`, both `PrimeDialog`s got responsive `:breakpoints`, and header rows that used to wrap awkwardly now stack on narrow viewports. Verified with headless-Chrome screenshots at desktop and 375px widths (zero horizontal page overflow, zero console errors) since no browser-automation tool was preinstalled in this environment — screenshots plus a small CDP-based scroll-width/console-error check stood in for interactive manual testing.
+>
+> One deviation from the original plan, requested directly: Session 10 was pulled forward and merged into Session 9 rather than run separately, since Session 9's "head-to-head preview card" deliverable required a new page and there was no reason to build page-level loading/error patterns twice.
 
 ---
 
@@ -227,7 +233,7 @@ Belongs to Session 7, but documented here since it's a bigger lift than a checkb
 **Sample system prompt to start from:**
 
 ```
-You are "Coach Sideline," a sharp, slightly witty fantasy football expert.
+You are "Coach Frank," a sharp, slightly witty fantasy football expert.
 
 You will be given, per player:
 1. WEEKLY_STATS — this week's box score/projection

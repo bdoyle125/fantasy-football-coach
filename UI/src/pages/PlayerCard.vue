@@ -3,7 +3,7 @@
     <div v-if="playerDetail">
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 mb-3">
             <PrimeButton
               as="RouterLink"
               :to="{ name: 'Home' }"
@@ -113,27 +113,29 @@
                     </Card>
                   </TabPanel>
                   <TabPanel value="byWeek">
-                    <DataTable
+                    <div
                       v-if="weeklyTableRows.length"
-                      :value="weeklyTableRows"
+                      class="table-responsive"
                     >
-                      <Column
-                        field="week"
-                        header="Week"
-                      />
-                      <Column
-                        field="pointsPpr"
-                        header="Points (PPR)"
-                      />
-                      <Column
-                        field="positionRankPpr"
-                        header="Pos Rank (PPR)"
-                      />
-                      <Column
-                        field="gamesPlayed"
-                        header="Games Played"
-                      />
-                    </DataTable>
+                      <DataTable :value="weeklyTableRows">
+                        <Column
+                          field="week"
+                          header="Week"
+                        />
+                        <Column
+                          field="pointsPpr"
+                          header="Points (PPR)"
+                        />
+                        <Column
+                          field="positionRankPpr"
+                          header="Pos Rank (PPR)"
+                        />
+                        <Column
+                          field="gamesPlayed"
+                          header="Games Played"
+                        />
+                      </DataTable>
+                    </div>
                     <p
                       v-else
                       class="mb-0"
@@ -143,24 +145,26 @@
                     </p>
                   </TabPanel>
                   <TabPanel value="history">
-                    <DataTable :value="historyTableRows">
-                      <Column
-                        field="season"
-                        header="Season"
-                      />
-                      <Column
-                        field="pointsPpr"
-                        header="Points (PPR)"
-                      />
-                      <Column
-                        field="positionRankPpr"
-                        header="Pos Rank (PPR)"
-                      />
-                      <Column
-                        field="gamesPlayed"
-                        header="Games Played"
-                      />
-                    </DataTable>
+                    <div class="table-responsive">
+                      <DataTable :value="historyTableRows">
+                        <Column
+                          field="season"
+                          header="Season"
+                        />
+                        <Column
+                          field="pointsPpr"
+                          header="Points (PPR)"
+                        />
+                        <Column
+                          field="positionRankPpr"
+                          header="Pos Rank (PPR)"
+                        />
+                        <Column
+                          field="gamesPlayed"
+                          header="Games Played"
+                        />
+                      </DataTable>
+                    </div>
                     <Panel
                       v-for="season in historySeasonGroups"
                       :key="season.season"
@@ -212,24 +216,20 @@
         :modal="true"
         :closable="true"
         :style="{ width: '50vw' }"
+        :breakpoints="{ '768px': '90vw', '575px': '95vw' }"
       >
         <p>{{ startBenchRecommendation }}</p>
       </PrimeDialog>
     </div>
-    <div
+    <ErrorState
+      v-else-if="loadError"
+      message="Couldn't load this player's details."
+      @retry="getPlayerDetails"
+    />
+    <LoadingSpinner
       v-else
-      class="d-flex flex-column justify-content-center align-items-center"
-      style="height: 200px;"
-    >
-      <ProgressSpinner
-        style="width: 50px; height: 50px;"
-        strokeWidth="4"
-        fill="var(--surface-ground)"
-        animationDuration="1s"
-        aria-label="Loading"
-      />
-      <span class="ms-3">Loading player details...</span>
-    </div>
+      label="Loading player details..."
+    />
   </div>
 </template>
 
@@ -240,7 +240,6 @@ import { PlayerDetail } from '@/types/PlayerDetail';
 import { PlayerStats } from '@/types/PlayerStats/PlayerStats';
 import { Team } from '@/types/Team';
 import {
-  ProgressSpinner,
   Card,
   Button as PrimeButton,
   Dialog as PrimeDialog,
@@ -256,10 +255,13 @@ import {
 } from 'primevue';
 import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import ErrorState from '@/components/ErrorState.vue';
 
 interface componentData {
   playerId: string | null;
   playerDetail: PlayerDetail | null;
+  loadError: boolean;
   myteam: Team | null;
   startBenchRecommendation: string;
   showStartBenchDialog: boolean;
@@ -343,7 +345,6 @@ const POSITION_STAT_GROUPS: Record<string, Array<{ category: string; fields: Sta
 export default defineComponent({
   name: "PlayerCard",
   components: {
-    ProgressSpinner,
     Card,
     PrimeButton,
     PrimeDialog,
@@ -356,11 +357,14 @@ export default defineComponent({
     DataTable,
     Column,
     Panel,
+    LoadingSpinner,
+    ErrorState,
   },
   data(): componentData {
     return {
       playerId: null,
       playerDetail: null,
+      loadError: false,
       myteam: null,
       startBenchRecommendation: '',
       showStartBenchDialog: false,
@@ -445,8 +449,13 @@ export default defineComponent({
       };
     },
     async getPlayerDetails() {
-      const playerDetail = await this.PlayerService.fetchPlayerDetails(this.playerId as string);
-      this.playerDetail = playerDetail;
+      try {
+        this.loadError = false;
+        this.playerDetail = await this.PlayerService.fetchPlayerDetails(this.playerId as string);
+      } catch (error) {
+        console.error("Error loading player details:", error);
+        this.loadError = true;
+      }
     },
     async getMyTeam() {
       try {

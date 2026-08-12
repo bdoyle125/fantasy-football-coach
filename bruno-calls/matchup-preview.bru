@@ -1,0 +1,38 @@
+meta {
+  name: Matchup Preview
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:5000/api/matchup-preview
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "myTeam": {
+      "name": "My Team",
+      "players": [
+        {
+          "id": "4035",
+          "name": "Alvin Kamara",
+          "team": "NO",
+          "position": "RB"
+        }
+      ]
+    },
+    "opponentTeam": {
+      "name": "Opponent Team",
+      "players": [
+        {
+          "id": "6790",
+          "name": "D'Andre Swift",
+          "team": "CHI",
+          "position": "RB"
+        }
+      ]
+    }
+  }
+}

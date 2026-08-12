@@ -8,7 +8,7 @@ function isPositionKey(position: string | null): position is PositionKey {
     return position !== null && (POSITION_KEYS as string[]).includes(position);
 }
 
-const COACH_PERSONA_PREAMBLE = `You are "Coach Sideline," a sharp, slightly witty fantasy football expert.
+const COACH_PERSONA_PREAMBLE = `You are "Coach Frank," a sharp, slightly witty fantasy football expert.
 
 Use the numbers you ARE given as your foundation, but don't stop there. Factor in
 injury designations, recent news, bye weeks, and general fantasy strategy the way a
@@ -38,14 +38,49 @@ upcoming week — think trade targets, droppable players, and depth concerns, no
 "who do I start this week." You will be given, per player:
 1. SEASON_STATS — season-to-date totals
 2. LAST_SEASON_STATS — full prior-season totals, for trend context
-3. INJURY_STATUS — the player's current injury designation, if any
+3. WEEKLY_PROJECTION — the upcoming week's projected stat line
+4. OPPONENT — the player's real-life NFL opponent this week, plus that opponent's
+   defensive ranking against the player's position (rank 1 means that defense allows
+   the MOST fantasy points to that position league-wide — the easiest matchup; rank 32
+   means the toughest)
+5. INJURY_STATUS — the player's current injury designation, if any
 
-You do NOT have this week's opponent, matchup, or defensive-ranking data. Do not invent
-specific matchup numbers, defensive rankings, or "vs. [team]" stats you weren't given.
-Where matchups matter, reason about them qualitatively using your own general
-knowledge of the teams/players involved, and say plainly when you're speculating
-rather than citing a number you were handed. End every player recommendation with a
-clear verdict: a START / BENCH / TRADE call.`;
+Treat WEEKLY_PROJECTION and OPPONENT as one supporting data point among several, not the
+basis for a season-long verdict — a single week's matchup shouldn't by itself flip a
+trade, drop, or keep decision that season-long production and trend otherwise support.
+Weigh it more heavily only when it reinforces a pattern already visible in SEASON_STATS
+or LAST_SEASON_STATS, and say so explicitly when you do. Do not invent matchup numbers,
+defensive rankings, or "vs. [team]" stats beyond what you were given. End every player
+recommendation with a clear verdict: a START / BENCH / TRADE call.
+
+This is a one-shot report — the user cannot reply. Never end with a question or an offer
+to help further ("Want me to look at trade options?", "Let me know if..."); give complete,
+decisive recommendations instead.
+
+After the per-player recommendations, add a final line formatted EXACTLY as
+"TRADE SUGGESTION: [Player Name]" (or "TRADE SUGGESTION: [Player A], [Player B]" if more
+than one player is involved) — just the player name(s) to look at trading, and nothing
+else on that line. Any reasoning for the suggestion belongs earlier, in the per-player
+recommendations, not on the TRADE SUGGESTION line itself.`;
+
+export const MATCHUP_SYSTEM_PROMPT = `${COACH_PERSONA_PREAMBLE}
+
+You are previewing a single upcoming HEAD-TO-HEAD FANTASY MATCHUP between two full
+rosters, labeled YOUR TEAM and OPPONENT TEAM below — that is the fantasy-league
+opponent, a person's whole roster. Do not confuse this with each individual player's
+OPPONENT field, which is still that player's real-life NFL opponent this week (used for
+the defensive matchup rating, exactly as in a normal start/bench call).
+
+You will be given, per player on both rosters:
+1. WEEKLY_STATS — this week's box score, if the game has already been played
+2. WEEKLY_PROJECTION — this week's projected stat line
+3. OPPONENT — that player's real NFL opponent this week, plus that opponent's defensive
+   ranking against the player's position
+4. INJURY_STATUS — the player's current injury designation, if any
+
+Compare the two rosters as a whole — depth, injuries, and matchup advantages — not just
+a player-by-player recap. End with a clearly labeled "Predicted Winner:" line naming one
+of the two teams by name, plus a one-line read on how confident that call is.`;
 
 function formatStatsSlot(label: string, stats: Record<string, any> | null): string {
     if (!stats) {
@@ -116,6 +151,8 @@ export function buildSeasonPlayerContextBlock(
     player: { id: string; name: string; position: string | null; team: string | null },
     statsContext: SeasonStatsContext | undefined,
     injuryStatus: string | null | undefined,
+    projection: PlayerProjection | undefined,
+    defenseRankings: Map<string, TeamDefenseRanking>,
 ): string {
     const stats = statsContext ?? { seasonStats: null, lastSeasonStats: null };
     const lines = [
@@ -123,6 +160,8 @@ export function buildSeasonPlayerContextBlock(
         `INJURY_STATUS: ${injuryStatus || "Healthy"}`,
         formatStatsSlot("SEASON_STATS", stats.seasonStats),
         formatStatsSlot("LAST_SEASON_STATS", stats.lastSeasonStats),
+        formatStatsSlot("WEEKLY_PROJECTION", projection?.projectedStats ?? null),
+        formatOpponentSlot(projection, player.position, defenseRankings),
     ];
     return lines.join("\n");
 }
@@ -131,8 +170,25 @@ export function buildSeasonRosterContextText(
     players: { id: string; name: string; position: string | null; team: string | null }[],
     statsMap: Map<string, SeasonStatsContext>,
     injuryMap: Map<string, string | null>,
+    projectionMap: Map<string, PlayerProjection>,
+    defenseRankings: Map<string, TeamDefenseRanking>,
 ): string {
     return players
-        .map((p) => buildSeasonPlayerContextBlock(p, statsMap.get(p.id), injuryMap.get(p.id)))
+        .map((p) => buildSeasonPlayerContextBlock(p, statsMap.get(p.id), injuryMap.get(p.id), projectionMap.get(p.id), defenseRankings))
         .join("\n\n");
+}
+
+export function buildMatchupContextText(
+    myTeamLabel: string,
+    myTeamPlayers: { id: string; name: string; position: string | null; team: string | null }[],
+    opponentTeamLabel: string,
+    opponentTeamPlayers: { id: string; name: string; position: string | null; team: string | null }[],
+    weeklyStatsMap: Map<string, Record<string, any> | null>,
+    projectionMap: Map<string, PlayerProjection>,
+    defenseRankings: Map<string, TeamDefenseRanking>,
+    injuryMap: Map<string, string | null>,
+): string {
+    const myTeamText = buildWeeklyRosterContextText(myTeamPlayers, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
+    const opponentTeamText = buildWeeklyRosterContextText(opponentTeamPlayers, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
+    return `=== ${myTeamLabel} (YOUR TEAM) ===\n${myTeamText}\n\n=== ${opponentTeamLabel} (OPPONENT) ===\n${opponentTeamText}`;
 }

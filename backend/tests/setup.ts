@@ -2,6 +2,7 @@ import { beforeAll, afterAll, afterEach } from 'vitest';
 import { mswServer } from './msw/server';
 import { clearInjuryStatusesCache } from '../src/service-functions/getInjuryStatuses';
 import { clearDefenseRankingsCache } from '../src/service-functions/getDefenseRankings';
+import { clearMatchupCache } from '../src/service-functions/getMatchupForOwner';
 
 // Runs before any test file (see vitest.config.mts's setupFiles). dotenv.config() in
 // server.ts never overrides already-set process.env vars, and this file runs before
@@ -22,5 +23,6 @@ afterEach(() => {
   // (e.g. a fetch-failure override) can't leak into the next test's assertions.
   clearInjuryStatusesCache();
   clearDefenseRankingsCache();
+  clearMatchupCache();
 });
 afterAll(() => mswServer.close());

@@ -12,6 +12,11 @@ const router = createRouter({
             path: '/player/:playerId',
             name: 'PlayerCard',
             component: () => import('../pages/PlayerCard.vue'),
+        },
+        {
+            path: '/matchup',
+            name: 'MatchupPreview',
+            component: () => import('../pages/MatchupPreview.vue'),
         }
     ],
 })

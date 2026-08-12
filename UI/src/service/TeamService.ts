@@ -1,5 +1,6 @@
 import { Team } from "@/types/Team";
 import { Player } from "../../../backend/types/Player";
+import { DashboardInsights } from "@/types/DashboardInsights";
 
 export class TeamService {
     async fetchMyTeam(): Promise<Team> {
@@ -47,6 +48,22 @@ export class TeamService {
         }
         const data = await response.json();
         return data.recommendation;
+    }
+
+    async fetchDashboardInsights(players: Player[]): Promise<DashboardInsights> {
+        const api = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${api}api/dashboard-insights`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ players }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch dashboard insights');
+        }
+        const data = await response.json();
+        return data;
     }
 }
 

@@ -1,5 +1,6 @@
 import { NFL_TEAM_ABBREVIATIONS } from "../constants/nflTeams";
 import { PositionKey, TeamDefenseRanking } from "../../types/DefenseRankings";
+import { SleeperState } from "../../types/SleeperState";
 import { TtlCache } from "./lib/ttlCache";
 
 const STAT_FIELD_BY_POSITION: Record<PositionKey, string> = {
@@ -88,6 +89,28 @@ export async function getDefenseRankingsForSeason(season: string): Promise<Map<s
         rankingsCacheBySeason.set(season, cache);
     }
     return cache.getOrFetch(() => fetchDefenseRankingsForSeason(season));
+}
+
+function hasUsableRankings(rankings: Map<string, TeamDefenseRanking>): boolean {
+    for (const ranking of rankings.values()) {
+        for (const position of POSITION_KEYS) {
+            if (ranking.rankByPosition[position] !== null) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Early in a new season (before any games are played), every team's fantasy-points-allowed
+// stat is null, so the current season has no usable rankings yet — fall back to last
+// season's rankings as a reasonable proxy until real data exists.
+export async function getDefenseRankingsWithFallback(state: SleeperState): Promise<Map<string, TeamDefenseRanking>> {
+    const currentSeasonRankings = await getDefenseRankingsForSeason(state.season);
+    if (hasUsableRankings(currentSeasonRankings)) {
+        return currentSeasonRankings;
+    }
+    return getDefenseRankingsForSeason(state.previousSeason);
 }
 
 export function clearDefenseRankingsCache(): void {

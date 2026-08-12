@@ -8,6 +8,14 @@ export const TEST_OWNER_ID = 'test-owner-id';
 export const TEST_LEAGUE_ID = 'test-league-id';
 export const TEST_PLAYER_ID = '1234';
 
+// Matchup-of-the-week fixtures: a second roster/owner sharing TEST_MATCHUP_ID with the
+// primary test owner, so getMatchupForOwner's opponent-resolution has a real match.
+export const TEST_OPPONENT_OWNER_ID = 'test-opponent-owner-id';
+export const TEST_OPPONENT_PLAYER_ID = '5678';
+export const TEST_MATCHUP_ID = 1;
+export const TEST_ROSTER_ID = 1;
+export const TEST_OPPONENT_ROSTER_ID = 2;
+
 // Deliberately far outside any real calendar year so `/api/leagues`'s own
 // `currentYear - 1` computation can never accidentally collide with these and pick up
 // a stats-context fixture meant for the season/week/history flow.
@@ -18,10 +26,12 @@ export const TEST_SEASON_TWO_YEARS_AGO = '9997';
 
 export const leagueUsersFixture = [
   { user_id: TEST_OWNER_ID, metadata: { team_name: 'Test Team' } },
+  { user_id: TEST_OPPONENT_OWNER_ID, metadata: { team_name: 'Opponent Team' } },
 ];
 
 export const leagueRostersFixture = [
-  { owner_id: TEST_OWNER_ID, players: [TEST_PLAYER_ID] },
+  { roster_id: TEST_ROSTER_ID, owner_id: TEST_OWNER_ID, players: [TEST_PLAYER_ID] },
+  { roster_id: TEST_OPPONENT_ROSTER_ID, owner_id: TEST_OPPONENT_OWNER_ID, players: [TEST_OPPONENT_PLAYER_ID] },
 ];
 
 export const playersDictFixture = {
@@ -36,7 +46,29 @@ export const playersDictFixture = {
     // default and history-row filtering doesn't kick in for the shared happy-path fixture.
     years_exp: 5,
   },
+  [TEST_OPPONENT_PLAYER_ID]: {
+    full_name: 'Opponent Player',
+    team: 'BUF',
+    position: 'RB',
+    age: 25,
+    stats: null,
+    injury_status: null,
+    years_exp: 3,
+  },
 };
+
+// GET /v1/league/:leagueId/matchups/:week — two rosters sharing matchup_id play each
+// other; a null matchup_id means that roster has a bye that week.
+export const matchupsFixture = [
+  { roster_id: TEST_ROSTER_ID, matchup_id: TEST_MATCHUP_ID, players: [TEST_PLAYER_ID] },
+  { roster_id: TEST_OPPONENT_ROSTER_ID, matchup_id: TEST_MATCHUP_ID, players: [TEST_OPPONENT_PLAYER_ID] },
+];
+
+export const byeMatchupsFixture = [
+  { roster_id: TEST_ROSTER_ID, matchup_id: null, players: [TEST_PLAYER_ID] },
+];
+
+export const emptyMatchupsFixture: unknown[] = [];
 
 export const playerStatsFixture = {
   pts_ppr: 12.5,
@@ -150,5 +182,8 @@ export const handlers = [
   }),
   http.get('https://api.sleeper.app/v1/user/:ownerId/leagues/nfl/:season', () => {
     return HttpResponse.json(leaguesFixture);
+  }),
+  http.get('https://api.sleeper.app/v1/league/:leagueId/matchups/:week', () => {
+    return HttpResponse.json(matchupsFixture);
   }),
 ];

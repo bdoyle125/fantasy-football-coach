@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { getDefenseRankingsForSeason } from '../src/service-functions/getDefenseRankings';
+import { getDefenseRankingsForSeason, getDefenseRankingsWithFallback } from '../src/service-functions/getDefenseRankings';
 import { NFL_TEAM_ABBREVIATIONS } from '../src/constants/nflTeams';
 import { mswServer } from './msw/server';
-import { TEST_SEASON, teamDefenseStatsFixture } from './msw/handlers';
+import { TEST_SEASON, TEST_WEEK, TEST_PREVIOUS_SEASON, teamDefenseStatsFixture } from './msw/handlers';
 
 describe('getDefenseRankingsForSeason', () => {
   it('returns a ranking entry for all 32 teams using the season-to-date fixture', async () => {
@@ -74,5 +74,36 @@ describe('getDefenseRankingsForSeason', () => {
 
     expect(requestsAfterFirstCall).toBe(32);
     expect(requestCount).toBe(requestsAfterFirstCall);
+  });
+});
+
+describe('getDefenseRankingsWithFallback', () => {
+  const state = { season: TEST_SEASON, week: TEST_WEEK, seasonType: 'regular', previousSeason: TEST_PREVIOUS_SEASON };
+
+  it('uses the current season directly when it has usable rankings', async () => {
+    const rankings = await getDefenseRankingsWithFallback(state);
+
+    expect(rankings.get(NFL_TEAM_ABBREVIATIONS[0])?.rankByPosition.RB).not.toBeNull();
+    expect(rankings.get(NFL_TEAM_ABBREVIATIONS[0])?.fantasyPointsAllowed.RB).toBe(teamDefenseStatsFixture.stats.fan_pts_allow_rb);
+  });
+
+  // The realistic trigger: a brand-new season with zero games played yields all-null
+  // rankings for every team, which is exactly what a real Sleeper response looks like
+  // before the season starts.
+  it('falls back to the previous season when the current season has no usable rankings', async () => {
+    mswServer.use(
+      http.get('https://api.sleeper.app/stats/nfl/player/:playerId', ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('season') === TEST_SEASON) {
+          return HttpResponse.json({ stats: {} });
+        }
+        return HttpResponse.json(teamDefenseStatsFixture);
+      }),
+    );
+
+    const rankings = await getDefenseRankingsWithFallback(state);
+
+    expect(rankings.get(NFL_TEAM_ABBREVIATIONS[0])?.rankByPosition.RB).not.toBeNull();
+    expect(rankings.get(NFL_TEAM_ABBREVIATIONS[0])?.fantasyPointsAllowed.RB).toBe(teamDefenseStatsFixture.stats.fan_pts_allow_rb);
   });
 });

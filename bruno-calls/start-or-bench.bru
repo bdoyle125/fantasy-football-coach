@@ -1,0 +1,36 @@
+meta {
+  name: Start or Bench
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:5000/api/start-or-bench
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "player": {
+      "id": "4035",
+      "name": "Alvin Kamara",
+      "team": "NO",
+      "position": "RB"
+    },
+    "roster": [
+      {
+        "id": "4035",
+        "name": "Alvin Kamara",
+        "team": "NO",
+        "position": "RB"
+      },
+      {
+        "id": "6790",
+        "name": "D'Andre Swift",
+        "team": "CHI",
+        "position": "RB"
+      }
+    ]
+  }
+}

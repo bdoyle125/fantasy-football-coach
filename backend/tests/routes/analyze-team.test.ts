@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { mockCreate, MockOpenAI } from '../mocks/openai';
 import { mswServer } from '../msw/server';
 import { SEASON_SYSTEM_PROMPT } from '../../src/service-functions/buildCoachContext';
+import { TEST_OPPONENT } from '../msw/handlers';
 
 // Must run before `createApp` is imported: server.ts does `new OpenAI(...)` at module
 // construction time, so the mock has to be registered first or the real SDK gets used.
@@ -34,7 +35,7 @@ describe('POST /api/analyze-team', () => {
     expect(res.body).toEqual({ analysis: 'Trade your kicker.' });
   });
 
-  it('sends the season-scoped Coach Sideline system prompt ahead of the player-context user message', async () => {
+  it('sends the season-scoped Coach Frank system prompt ahead of the player-context user message', async () => {
     mockCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'Trade your kicker.' } }],
     });
@@ -48,7 +49,7 @@ describe('POST /api/analyze-team', () => {
     expect(messages[1].role).toBe('user');
   });
 
-  it('includes season and last-season stats, and omits single-week matchup framing', async () => {
+  it("includes season/last-season stats plus this week's projection and matchup, but omits played-game box scores", async () => {
     mockCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'Trade your kicker.' } }],
     });
@@ -60,9 +61,9 @@ describe('POST /api/analyze-team', () => {
     const userMessage = mockCreate.mock.calls[0][0].messages[1].content;
     expect(userMessage).toContain('SEASON_STATS');
     expect(userMessage).toContain('LAST_SEASON_STATS');
+    expect(userMessage).toContain('WEEKLY_PROJECTION');
+    expect(userMessage).toContain(`OPPONENT: ${TEST_OPPONENT}`);
     expect(userMessage).not.toContain('WEEKLY_STATS');
-    expect(userMessage).not.toContain('WEEKLY_PROJECTION');
-    expect(userMessage).not.toContain('OPPONENT');
   });
 
   // A single roster-mate's Sleeper stats endpoint failing shouldn't sink the whole
