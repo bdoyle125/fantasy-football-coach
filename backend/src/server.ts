@@ -203,7 +203,8 @@ class Server {
           return response.status(400).json({ error: 'Invalid players data' });
         }
 
-        const playerIds: string[] = players.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const validPlayers = players.filter((p: any) => p && p.id);
+        const playerIds: string[] = validPlayers.map((p: any) => p.id);
         const state = await getSleeperState();
         const [statsMap, injuryMap, projectionMap, defenseRankings] = await Promise.all([
           getSeasonStatsForRoster(playerIds, state),
@@ -211,7 +212,7 @@ class Server {
           getProjectionsForRoster(playerIds, state),
           getDefenseRankingsWithFallback(state),
         ]);
-        const contextText = buildSeasonRosterContextText(players, statsMap, injuryMap, projectionMap, defenseRankings);
+        const contextText = buildSeasonRosterContextText(validPlayers, statsMap, injuryMap, projectionMap, defenseRankings);
 
         const prompt = `Analyze the following fantasy football players and provide suggestions for improving the team:\n\n${contextText}\n\nProvide specific recommendations.`;
         const aiResponse = await this.openAiClient.chat.completions.create({
@@ -241,7 +242,8 @@ class Server {
           return response.status(400).json({ error: 'Invalid roster data' });
         }
 
-        const rosterIds: string[] = roster.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const validRoster = roster.filter((p: any) => p && p.id);
+        const rosterIds: string[] = validRoster.map((p: any) => p.id);
         const state = await getSleeperState();
         const [weeklyStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
           getWeeklyStatsForRoster(rosterIds, state),
@@ -249,7 +251,7 @@ class Server {
           getDefenseRankingsWithFallback(state),
           getInjuryStatuses(rosterIds),
         ]);
-        const contextText = buildWeeklyRosterContextText(roster, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
+        const contextText = buildWeeklyRosterContextText(validRoster, weeklyStatsMap, projectionMap, defenseRankings, injuryMap);
 
         const prompt = `Here is the full roster:\n\n${contextText}\n\nShould ${player.name} (${player.position || 'Unknown Position'}) be started or benched this week? Consider the depth at their position elsewhere on the roster. Respond with a clear "Start" or "Bench" verdict followed by a brief explanation.`;
 
@@ -278,7 +280,8 @@ class Server {
           return response.status(400).json({ error: 'Invalid players data' });
         }
 
-        const playerIds: string[] = players.filter((p: any) => p && p.id).map((p: any) => p.id);
+        const validPlayers = players.filter((p: any) => p && p.id);
+        const playerIds: string[] = validPlayers.map((p: any) => p.id);
         const state = await getSleeperState();
         const [seasonStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
           getSeasonStatsForRoster(playerIds, state),
@@ -287,8 +290,8 @@ class Server {
           getInjuryStatuses(playerIds),
         ]);
 
-        const teamStrength = computeTeamStrength(players, seasonStatsMap);
-        const playerToWatch = computePlayerToWatch(players, projectionMap, defenseRankings, injuryMap);
+        const teamStrength = computeTeamStrength(validPlayers, seasonStatsMap);
+        const playerToWatch = computePlayerToWatch(validPlayers, projectionMap, defenseRankings, injuryMap);
 
         response.json({ teamStrength, playerToWatch });
       } catch (error) {
@@ -307,9 +310,9 @@ class Server {
           return response.status(400).json({ error: 'Invalid opponentTeam data' });
         }
 
-        const combinedPlayerIds: string[] = [...myTeam.players, ...opponentTeam.players]
-          .filter((p: any) => p && p.id)
-          .map((p: any) => p.id);
+        const validMyTeamPlayers = myTeam.players.filter((p: any) => p && p.id);
+        const validOpponentTeamPlayers = opponentTeam.players.filter((p: any) => p && p.id);
+        const combinedPlayerIds: string[] = [...validMyTeamPlayers, ...validOpponentTeamPlayers].map((p: any) => p.id);
         const state = await getSleeperState();
         const [weeklyStatsMap, projectionMap, defenseRankings, injuryMap] = await Promise.all([
           getWeeklyStatsForRoster(combinedPlayerIds, state),
@@ -319,9 +322,9 @@ class Server {
         ]);
         const contextText = buildMatchupContextText(
           myTeam.name || 'Your Team',
-          myTeam.players,
+          validMyTeamPlayers,
           opponentTeam.name || 'Opponent Team',
-          opponentTeam.players,
+          validOpponentTeamPlayers,
           weeklyStatsMap,
           projectionMap,
           defenseRankings,

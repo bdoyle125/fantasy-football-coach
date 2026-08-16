@@ -66,6 +66,28 @@ describe('POST /api/analyze-team', () => {
     expect(userMessage).not.toContain('WEEKLY_STATS');
   });
 
+  // A malformed entry (no id) must be excluded from the AI context entirely, not just
+  // degraded to "unavailable" — otherwise it wastes tokens on a player with no real
+  // identity and no fetched data at all.
+  it('excludes a malformed player entry (missing id) from the context sent to the AI', async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'Trade your kicker.' } }],
+    });
+
+    await request(app)
+      .post('/api/analyze-team')
+      .send({
+        players: [
+          { name: 'Malformed Player', position: 'RB', team: 'KC' },
+          { id: '1234', name: 'Player A', position: 'QB', team: 'KC' },
+        ],
+      });
+
+    const userMessage = mockCreate.mock.calls[0][0].messages[1].content;
+    expect(userMessage).not.toContain('Malformed Player');
+    expect(userMessage).toContain('Player A');
+  });
+
   // A single roster-mate's Sleeper stats endpoint failing shouldn't sink the whole
   // request — that player's context degrades to "unavailable" instead.
   it('still returns 200 when one player\'s season stats fetch fails, marking that player unavailable', async () => {
