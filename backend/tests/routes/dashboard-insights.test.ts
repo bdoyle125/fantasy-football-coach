@@ -27,6 +27,21 @@ describe('POST /api/dashboard-insights', () => {
     expect(typeof res.body.playerToWatch.defenseRank).toBe('number');
   });
 
+  it('excludes a malformed player entry (missing id) from the underlying computations', async () => {
+    const res = await request(app)
+      .post('/api/dashboard-insights')
+      .send({
+        players: [
+          { name: 'Malformed Player', position: 'RB', team: 'KC' },
+          { id: TEST_PLAYER_ID, name: 'Test Player', position: 'QB', team: 'KC' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.teamStrength.playersCounted).toBe(1);
+    expect(res.body.playerToWatch).toMatchObject({ name: 'Test Player' });
+  });
+
   it('returns 400 when players is missing or not an array', async () => {
     const res = await request(app).post('/api/dashboard-insights').send({ players: 'not-an-array' });
 
