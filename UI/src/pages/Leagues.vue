@@ -258,7 +258,7 @@ export default defineComponent({
       },
       addInProgress: false,
       addError: null,
-      providerOptions: ['sleeper', 'espn'],
+      providerOptions: ['sleeper'],
       sleeperLeagues: [],
       sleeperLeaguesInProgress: false,
       sleeperLeaguesError: null,
