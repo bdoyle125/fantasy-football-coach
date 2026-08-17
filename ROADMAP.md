@@ -24,11 +24,11 @@
 
 ---
 
-## 🧭 Project Status Snapshot (as of Aug 11)
+## 🧭 Project Status Snapshot (as of Aug 16)
 
-**Done (Sessions 1–10):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Frank" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering, fantasy-matchup opponent resolution + AI "Matchup Preview" page, dashboard stat cards (heuristic Team Strength/Player to Watch + AI-reused Trade Suggestion), a mobile/loading/error-state polish pass across all three pages, a real Session-7 stats-unwrapping bug fix plus a last-season fallback for stats/defense rankings, and an expanded `/api/analyze-team` (now includes projection/matchup data too).
+**Done (Sessions 1–12):** repo scaffolded, frontend + backend running and deployed (Netlify + Render, deploy issue resolved), Sleeper API connected, roster/stats fetched and shown in a table, `/analyze-team` route with OpenAI summary, Player Cards with per-player "Start or Bench?" AI button, backend test suite (mocked Sleeper/OpenAI failure paths), Supabase project connected and storing user settings, `leagues` table designed with a `provider` column for future multi-provider support, "Coach Frank" AI persona with route-scoped context (season-long stats for team analysis, weekly stats + opponent/defense ranking + projections for start/bench calls), Player Card redesigned as a scannable scouting report (headline tiles, curated/categorized stat tiles, inline injury status) plus 3-year season history and current-season weekly stats with rookie-aware filtering, fantasy-matchup opponent resolution + AI "Matchup Preview" page, dashboard stat cards (heuristic Team Strength/Player to Watch + AI-reused Trade Suggestion), a mobile/loading/error-state polish pass across all three pages, a real Session-7 stats-unwrapping bug fix plus a last-season fallback for stats/defense rankings, an expanded `/api/analyze-team` (now includes projection/matchup data too), a header/sidebar nav shell with real branding, a combined multi-league add/switch feature, an "Ask Coach Anything" multi-turn chat, an AI Season Summary report, and a real root `README.md` + `.env.example` files.
 
-**Not started:** everything from Sessions 11–12 onward.
+**Not started:** Supabase Auth login and ESPN Fantasy support — both explicitly deferred post-kickoff (see Sessions 11–12 status note below).
 
 > "(Optional) Log past AI analyses" was deliberately skipped this session and deferred — noted in Session 6 below.
 
@@ -218,19 +218,23 @@ Real-life constraints: 8–5 job (weekdays are out), Tue/Wed nights have a 7–8
 
 ---
 
-### ▶️ **Sessions 11–12 — Wrap-Up & Stretch**
-- [ ]  Add Logo & Header to Website
-- [ ]  "Ask Coach Anything" chat feature
-- [ ]  Multi-league switching — see below
-- [ ]  Sidebar to choose from multiple screens (Roster, Leagues, Ask Coach Anything, Profile, etc)
-- [ ]  (Optional) Add Supabase Auth login
-- [ ]  (Optional) "Season Summary" AI report
-- [ ]  (Stretch) ESPN Fantasy support — see below
-- [ ]  (Stretch) Adding a league through the UI
-- [ ]  Write README and final deployment
+### ▶️ **Sessions 11–12 — Wrap-Up & Stretch** ✅
+- [x]  Add Logo & Header to Website
+- [x]  "Ask Coach Anything" chat feature
+- [x]  Multi-league switching — see below
+- [x]  Sidebar to choose from multiple screens (Roster, Leagues, Ask Coach Anything, Profile, etc)
+- [ ]  (Optional) Add Supabase Auth login — deferred, see status note
+- [x]  (Optional) "Season Summary" AI report
+- [ ]  (Stretch) ESPN Fantasy support — see below — deferred, per existing note above (cookie-based auth risk not worth it before kickoff)
+- [x]  (Stretch) Adding a league through the UI — combined into multi-league switching, see status note
+- [x]  Write README and final deployment
 
 **🎯 Deliverable:** Full working app + documentation
 **💸 Cost:** +$5 if adding chat
+
+> **Status:** Done — 5 of the 9 checklist items shipped as scoped; the remaining 4 were explicitly deferred with the user up front rather than attempted and cut short. New nav shell (`UI/src/components/AppShell.vue`): header with the "Coach Frank" logo (`UI/public/coach-frank-header.png`, favicon `coach-frank-icon.ico`) and a PrimeVue `Drawer` sidebar linking to Roster, Leagues, and Ask Coach Anything — replaces the old per-page back-buttons on Player Card and Matchup Preview. New `/leagues` page + `LeagueService.ts` + backend `listLeaguesForUser`/`activateExistingLeague` (`GET /api/leagues/mine`, `PUT /api/leagues/active`) let you add and switch between leagues without touching `db:seed` or curl — "multi-league switching" and "adding a league through the UI" were scoped as one combined feature since a switcher is untestable without a way to add a second league. New `/ask-coach` page + `ChatService.ts` + backend `POST /api/chat`: multi-turn, but stateless server-side — the frontend holds the conversation array and resends the full transcript each turn (no new DB table, consistent with the app never persisting AI output elsewhere). New Season Summary card on the Roster page (4th card alongside Team Strength/Player to Watch/Trade Suggestion) + backend `POST /api/season-summary`, reusing the same season-stats context as `/api/analyze-team` with a narrative-focused system prompt instead of per-player verdicts. Root `README.md` (was a 1-line stub) plus new `backend/.env.example`/`UI/.env.example` (neither existed before, despite `CLAUDE.md` referencing the backend one). All of it verified live: 165 backend tests passing (25 new), UI type-check/lint clean, and a real headless-browser pass against both dev servers — nav/sidebar, league add+switch, a real multi-turn chat exchange, and a real Season Summary dialog all exercised against the live Sleeper/OpenAI/Supabase backends, plus a mobile-width (375px) check confirming no horizontal overflow on Roster or Leagues.
+>
+> **Deferred, by explicit scoping decision before work started:** Supabase Auth login — the app is single-user everywhere today (`settingsRepository.ts` has no `userId` param, every query assumes exactly one row), so real auth would be a structural rewrite, not a wrap-up task; treated the same as ESPN support, which was already flagged for post-kickoff in the Multi-Provider section below.
 
 ---
 
@@ -272,9 +276,9 @@ with a clear START / BENCH / TRADE verdict.
 Two related stretch goals — worth designing for early, not necessarily building early:
 
 **Multi-league switching:**
-- [ ]  Add a `leagues` table in Supabase: one user → many leagues, each with a `provider` field
-- [ ]  Add a league switcher to the UI
-- [ ]  Update `/analyze-team` and related routes to take `provider` + `leagueId` params instead of assuming a single hardcoded league
+- [x]  Add a `leagues` table in Supabase: one user → many leagues, each with a `provider` field — done in Session 6
+- [x]  Add a league switcher to the UI — done in Sessions 11–12 (`UI/src/pages/Leagues.vue`)
+- [ ]  Update `/analyze-team` and related routes to take `provider` + `leagueId` params instead of assuming a single hardcoded league — still open; those routes take `players[]` straight from the request body rather than resolving a league themselves, so switching the active league (and reloading Roster) already changes what gets sent, but there's still only ever one *active* league at a time, not a per-request choice
 
 **ESPN Fantasy support:**
 - [ ]  Abstract the current Sleeper calls behind a common interface — something like `getRoster()`, `getPlayerStats()`, `getMatchup()`, `getLeagueSettings()` — so Sleeper is just one implementation of it, not baked into the routes

@@ -1,6 +1,7 @@
 import { Team } from "@/types/Team";
 import { Player } from "../../../backend/types/Player";
 import { DashboardInsights } from "@/types/DashboardInsights";
+import { extractApiErrorMessage } from "../utils/apiError";
 
 export class TeamService {
     async fetchMyTeam(): Promise<Team> {
@@ -12,7 +13,7 @@ export class TeamService {
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch team data');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch team data'));
         }
         const data = await response.json();
         return data;
@@ -28,7 +29,7 @@ export class TeamService {
             body: JSON.stringify({ players }),
         });
         if (!response.ok) {
-            throw new Error('Failed to analyze team');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to analyze team'));
         }
         const data = await response.json();
         return data.analysis;
@@ -44,10 +45,26 @@ export class TeamService {
             body: JSON.stringify({ player, roster }),
         });
         if (!response.ok) {
-            throw new Error('Failed to get start/bench recommendation');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to get start/bench recommendation'));
         }
         const data = await response.json();
         return data.recommendation;
+    }
+
+    async fetchSeasonSummary(players: Player[]): Promise<string> {
+        const api = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${api}api/season-summary`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ players }),
+        });
+        if (!response.ok) {
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch season summary'));
+        }
+        const data = await response.json();
+        return data.summary;
     }
 
     async fetchDashboardInsights(players: Player[]): Promise<DashboardInsights> {
@@ -60,7 +77,7 @@ export class TeamService {
             body: JSON.stringify({ players }),
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch dashboard insights');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch dashboard insights'));
         }
         const data = await response.json();
         return data;

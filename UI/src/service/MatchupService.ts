@@ -1,5 +1,6 @@
 import { MatchupResult } from "../types/Matchup";
 import { Team } from "../types/Team";
+import { extractApiErrorMessage } from "../utils/apiError";
 
 export class MatchupService {
     async fetchMatchup(): Promise<MatchupResult> {
@@ -11,7 +12,7 @@ export class MatchupService {
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch matchup data');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch matchup data'));
         }
         const data = await response.json();
         return data;
@@ -27,7 +28,7 @@ export class MatchupService {
             body: JSON.stringify({ myTeam, opponentTeam }),
         });
         if (!response.ok) {
-            throw new Error('Failed to generate matchup preview');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to generate matchup preview'));
         }
         const data = await response.json();
         return data.preview;

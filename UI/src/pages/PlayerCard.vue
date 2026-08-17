@@ -3,13 +3,7 @@
     <div v-if="playerDetail">
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 mb-3">
-            <PrimeButton
-              as="RouterLink"
-              :to="{ name: 'Home' }"
-              icon="pi pi-arrow-left"
-              label="Back to Player List"
-            />
+          <div class="d-flex justify-content-end mb-3">
             <PrimeButton
               v-if="myteam?.players?.length"
               :loading="startBenchInProgress"
@@ -257,6 +251,7 @@ import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import { showApiErrorToast } from '@/utils/apiError';
 
 interface componentData {
   playerId: string | null;
@@ -471,6 +466,7 @@ export default defineComponent({
         this.showStartBenchDialog = true;
       } catch (error) {
         console.error("Error getting start/bench advice:", error);
+        showApiErrorToast(this.$toast, "Failed to get start/bench advice", error);
       } finally {
         this.startBenchInProgress = false;
       }
