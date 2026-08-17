@@ -17,6 +17,16 @@ const router = createRouter({
             path: '/matchup',
             name: 'MatchupPreview',
             component: () => import('../pages/MatchupPreview.vue'),
+        },
+        {
+            path: '/leagues',
+            name: 'Leagues',
+            component: () => import('../pages/Leagues.vue'),
+        },
+        {
+            path: '/ask-coach',
+            name: 'AskCoach',
+            component: () => import('../pages/AskCoach.vue'),
         }
     ],
 })

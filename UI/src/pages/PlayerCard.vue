@@ -3,13 +3,7 @@
     <div v-if="playerDetail">
       <div class="row justify-content-center">
         <div class="col-md-10">
-          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 mb-3">
-            <PrimeButton
-              as="RouterLink"
-              :to="{ name: 'Home' }"
-              icon="pi pi-arrow-left"
-              label="Back to Player List"
-            />
+          <div class="d-flex justify-content-end mb-3">
             <PrimeButton
               v-if="myteam?.players?.length"
               :loading="startBenchInProgress"

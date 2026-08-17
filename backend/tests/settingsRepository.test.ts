@@ -4,6 +4,9 @@ import { mswServer } from './msw/server';
 import {
   getActiveLeagueSettings,
   setActiveLeague,
+  listLeaguesForUser,
+  activateExistingLeague,
+  removeLeague,
   ensureSingleUser,
 } from '../src/repositories/settingsRepository';
 
@@ -219,6 +222,176 @@ describe('setActiveLeague', () => {
     );
 
     await expect(setActiveLeague(input)).rejects.toThrow('Failed to update active league');
+  });
+});
+
+describe('listLeaguesForUser', () => {
+  it('returns leagues with isActive marked on the happy path', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([
+          { id: 'league-1', provider: 'sleeper', provider_league_id: 'lg-1', provider_owner_id: 'ow-1', league_name: 'League One' },
+          { id: 'league-2', provider: 'sleeper', provider_league_id: 'lg-2', provider_owner_id: 'ow-2', league_name: 'League Two' },
+        ]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/user_settings`, () => {
+        return HttpResponse.json([{ active_league_id: 'league-2' }]);
+      }),
+    );
+
+    const leagues = await listLeaguesForUser();
+
+    expect(leagues).toEqual([
+      { id: 'league-1', provider: 'sleeper', providerLeagueId: 'lg-1', providerOwnerId: 'ow-1', leagueName: 'League One', isActive: false },
+      { id: 'league-2', provider: 'sleeper', providerLeagueId: 'lg-2', providerOwnerId: 'ow-2', leagueName: 'League Two', isActive: true },
+    ]);
+  });
+
+  it('returns an empty array when no user exists yet', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await expect(listLeaguesForUser()).resolves.toEqual([]);
+  });
+
+  it('throws a wrapped error when listing leagues fails', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      }),
+    );
+
+    await expect(listLeaguesForUser()).rejects.toThrow('Failed to list leagues');
+  });
+});
+
+describe('activateExistingLeague', () => {
+  it('activates an existing league on the happy path', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([
+          { id: 'league-2', provider: 'sleeper', provider_league_id: 'lg-2', provider_owner_id: 'ow-2', league_name: 'League Two' },
+        ]);
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/user_settings`, () => {
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const settings = await activateExistingLeague('league-2');
+
+    expect(settings).toEqual({
+      userId: 'user-1',
+      leagueId: 'league-2',
+      provider: 'sleeper',
+      providerLeagueId: 'lg-2',
+      providerOwnerId: 'ow-2',
+      leagueName: 'League Two',
+    });
+  });
+
+  it('throws when the league does not belong to this user', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await expect(activateExistingLeague('league-99')).rejects.toThrow('was not found for this user');
+  });
+
+  it('throws when no user exists yet', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await expect(activateExistingLeague('league-2')).rejects.toThrow('No user found');
+  });
+
+  it('throws a wrapped error when updating the active setting fails', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([
+          { id: 'league-2', provider: 'sleeper', provider_league_id: 'lg-2', provider_owner_id: 'ow-2', league_name: 'League Two' },
+        ]);
+      }),
+      http.post(`${SUPABASE_URL}/rest/v1/user_settings`, () => {
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      }),
+    );
+
+    await expect(activateExistingLeague('league-2')).rejects.toThrow('Failed to update active league');
+  });
+});
+
+describe('removeLeague', () => {
+  it('removes an existing league on the happy path', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.delete(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([{ id: 'league-2' }]);
+      }),
+    );
+
+    await expect(removeLeague('league-2')).resolves.toBeUndefined();
+  });
+
+  it('throws when the league does not belong to this user', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.delete(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await expect(removeLeague('league-99')).rejects.toThrow('was not found for this user');
+  });
+
+  it('throws when no user exists yet', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await expect(removeLeague('league-2')).rejects.toThrow('No user found');
+  });
+
+  it('throws a wrapped error when the delete fails', async () => {
+    mswServer.use(
+      http.get(`${SUPABASE_URL}/rest/v1/users`, () => {
+        return HttpResponse.json([{ id: 'user-1' }]);
+      }),
+      http.delete(`${SUPABASE_URL}/rest/v1/leagues`, () => {
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      }),
+    );
+
+    await expect(removeLeague('league-2')).rejects.toThrow('Failed to remove league');
   });
 });
 

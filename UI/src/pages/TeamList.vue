@@ -36,7 +36,7 @@
           v-else
           class="row g-3"
         >
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <Card class="h-100 text-center">
               <template #content>
                 <div class="fs-3 fw-bold">{{ dashboardInsights?.teamStrength.tier ?? "--" }}</div>
@@ -51,7 +51,7 @@
               </template>
             </Card>
           </div>
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <Card class="h-100 text-center">
               <template #content>
                 <div v-if="dashboardInsights?.playerToWatch">
@@ -71,7 +71,7 @@
               </template>
             </Card>
           </div>
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <Card class="h-100 text-center">
               <template #content>
                 <div class="fw-bold mb-1">Trade Suggestion</div>
@@ -103,6 +103,36 @@
                   size="small"
                   severity="secondary"
                   @click="analyzeTeam"
+                />
+              </template>
+            </Card>
+          </div>
+          <div class="col-12 col-md-3">
+            <Card class="h-100 text-center">
+              <template #content>
+                <div class="fw-bold mb-1">Season Summary</div>
+                <div
+                  v-if="seasonSummary"
+                  class="small"
+                >
+                  <a
+                    href="#"
+                    @click.prevent="showSeasonSummaryDialog = true"
+                  >View full summary</a>
+                </div>
+                <div
+                  v-else-if="seasonSummaryInProgress"
+                  class="small"
+                  style="color: var(--p-text-muted-color)"
+                >
+                  Summarizing...
+                </div>
+                <PrimeButton
+                  v-else
+                  label="Run Season Summary"
+                  size="small"
+                  severity="secondary"
+                  @click="getSeasonSummary"
                 />
               </template>
             </Card>
@@ -154,6 +184,16 @@
       >
         <p>{{ analysis }}</p>
       </PrimeDialog>
+      <PrimeDialog
+        header="Season Summary"
+        v-model:visible="showSeasonSummaryDialog"
+        :modal="true"
+        :closable="true"
+        :style="{ width: '50vw' }"
+        :breakpoints="{ '768px': '90vw', '575px': '95vw' }"
+      >
+        <p>{{ seasonSummary }}</p>
+      </PrimeDialog>
     </div>
     <ErrorState
       v-else-if="loadError"
@@ -187,6 +227,9 @@ interface componentData {
   dashboardInsights: DashboardInsights | null;
   insightsInProgress: boolean;
   insightsError: boolean;
+  seasonSummary: string;
+  showSeasonSummaryDialog: boolean;
+  seasonSummaryInProgress: boolean;
 }
 
 const TRADE_SUGGESTION_MARKER = "TRADE SUGGESTION:";
@@ -218,6 +261,9 @@ export default defineComponent({
       dashboardInsights: null,
       insightsInProgress: false,
       insightsError: false,
+      seasonSummary: '',
+      showSeasonSummaryDialog: false,
+      seasonSummaryInProgress: false,
     };
   },
   computed: {
@@ -251,6 +297,20 @@ export default defineComponent({
         console.error("Error analyzing team:", error);
       } finally {
         this.analysisInProgress = false;
+      }
+    },
+    async getSeasonSummary() {
+      try {
+        if (!this.myteam) {
+          return;
+        }
+        this.seasonSummaryInProgress = true;
+        this.seasonSummary = await this.TeamService.fetchSeasonSummary(this.myteam.players);
+        this.showSeasonSummaryDialog = true;
+      } catch (error) {
+        console.error("Error fetching season summary:", error);
+      } finally {
+        this.seasonSummaryInProgress = false;
       }
     },
     async getTeam() {

@@ -50,6 +50,22 @@ export class TeamService {
         return data.recommendation;
     }
 
+    async fetchSeasonSummary(players: Player[]): Promise<string> {
+        const api = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${api}api/season-summary`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ players }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch season summary');
+        }
+        const data = await response.json();
+        return data.summary;
+    }
+
     async fetchDashboardInsights(players: Player[]): Promise<DashboardInsights> {
         const api = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${api}api/dashboard-insights`, {

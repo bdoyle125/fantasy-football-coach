@@ -6,3 +6,6 @@ import { vi } from 'vitest';
 // rationale as tests/mocks/openai.ts).
 export const mockGetActiveLeagueSettings = vi.fn();
 export const mockSetActiveLeague = vi.fn();
+export const mockListLeaguesForUser = vi.fn();
+export const mockActivateExistingLeague = vi.fn();
+export const mockRemoveLeague = vi.fn();

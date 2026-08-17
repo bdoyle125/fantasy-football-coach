@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { getTeamForOwner } from './service-functions/getTeamForOwner';
 import { getMatchupForOwner } from './service-functions/getMatchupForOwner';
-import { getActiveLeagueSettings, setActiveLeague } from './repositories/settingsRepository';
+import { getActiveLeagueSettings, setActiveLeague, listLeaguesForUser, activateExistingLeague, removeLeague } from './repositories/settingsRepository';
 import { isSupabaseConfigured } from './db/supabaseClient';
 import { getSleeperState } from './service-functions/getSleeperState';
 import { getWeeklyStatsForRoster } from './service-functions/getWeeklyStatsContext';
@@ -17,11 +17,13 @@ import { computeTeamStrength, computePlayerToWatch } from './service-functions/c
 import {
   WEEKLY_SYSTEM_PROMPT,
   SEASON_SYSTEM_PROMPT,
+  SEASON_SUMMARY_SYSTEM_PROMPT,
   MATCHUP_SYSTEM_PROMPT,
   buildWeeklyRosterContextText,
   buildSeasonRosterContextText,
   buildMatchupContextText,
 } from './service-functions/buildCoachContext';
+import { CHAT_SYSTEM_PROMPT } from './service-functions/buildChatContext';
 
 dotenv.config();
 
@@ -184,14 +186,72 @@ class Server {
       }
     });
 
+    // Proxies Sleeper's leagues-for-a-Sleeper-user endpoint -- NOT the same as
+    // /api/leagues/mine below, which lists leagues already saved in our own DB. Accepts
+    // ownerId/season query params (e.g. to look up a Sleeper user's leagues before
+    // adding one via PUT /api/settings), falling back to SLEEPER_OWNER_ID and the
+    // current year when omitted.
     this.app.get('/api/leagues', async (req: Request, res: Response) => {
       try {
-        const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${process.env.SLEEPER_OWNER_ID}/leagues/nfl/${new Date().getFullYear() - 1}`); // TODO: handle accessing year for current season
+        let ownerId: string | undefined;
+        if (typeof req.query.ownerId === 'string' && req.query.ownerId) {
+          ownerId = req.query.ownerId;
+        } else {
+          ownerId = process.env.SLEEPER_OWNER_ID;
+        }
+        if (!ownerId) {
+          return res.status(400).json({ error: 'ownerId is required' });
+        }
+        let season: string;
+        if (typeof req.query.season === 'string' && req.query.season) {
+          season = req.query.season;
+        } else {
+          season = String(new Date().getFullYear());
+        }
+        const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${ownerId}/leagues/nfl/${season}`);
         const leaguesData = await leaguesRes.json();
         res.json({ leagues: leaguesData });
       } catch (error) {
         console.error('Error fetching leagues data:', error);
         res.status(500).json({ error: 'Error fetching leagues data' });
+      }
+    });
+
+    this.app.get('/api/leagues/mine', async (req: Request, res: Response) => {
+      try {
+        const leagues = await listLeaguesForUser();
+        res.json({ leagues });
+      } catch (error) {
+        console.error('Error listing leagues:', error);
+        res.status(500).json({ error: 'Error listing leagues' });
+      }
+    });
+
+    this.app.put('/api/leagues/active', async (req: Request, res: Response) => {
+      try {
+        const { leagueId } = req.body;
+        if (typeof leagueId !== 'string' || !leagueId) {
+          return res.status(400).json({ error: 'leagueId is required' });
+        }
+        const settings = await activateExistingLeague(leagueId);
+        res.json(settings);
+      } catch (error) {
+        console.error('Error activating league:', error);
+        res.status(500).json({ error: 'Error activating league' });
+      }
+    });
+
+    this.app.delete('/api/leagues/:id', async (req: Request, res: Response) => {
+      try {
+        const leagueId = req.params.id;
+        if (!leagueId) {
+          return res.status(400).json({ error: 'league id is required' });
+        }
+        await removeLeague(leagueId);
+        res.status(204).send();
+      } catch (error) {
+        console.error('Error removing league:', error);
+        res.status(500).json({ error: 'Error removing league' });
       }
     });
 
@@ -229,6 +289,42 @@ class Server {
       } catch (error) {
         console.error('Error analyzing team:', error);
         response.status(500).json({ error: 'Error analyzing team' });
+      }
+    });
+
+    this.app.post('/api/season-summary', async (req: Request, response: Response) => {
+      try {
+        const players = req.body.players;
+        if (!players || !Array.isArray(players)) {
+          return response.status(400).json({ error: 'Invalid players data' });
+        }
+
+        const validPlayers = players.filter((p: any) => p && p.id);
+        const playerIds: string[] = validPlayers.map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [statsMap, injuryMap, projectionMap, defenseRankings] = await Promise.all([
+          getSeasonStatsForRoster(playerIds, state),
+          getInjuryStatuses(playerIds),
+          getProjectionsForRoster(playerIds, state),
+          getDefenseRankingsWithFallback(state),
+        ]);
+        const contextText = buildSeasonRosterContextText(validPlayers, statsMap, injuryMap, projectionMap, defenseRankings);
+
+        const prompt = `Here is the roster's season data so far:\n\n${contextText}\n\nWrite the season summary.`;
+        const aiResponse = await this.openAiClient.chat.completions.create({
+          model: 'gpt-5-mini',
+          messages: [
+            { role: 'system', content: SEASON_SUMMARY_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
+        });
+        if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
+          return response.status(500).json({ error: 'No valid response from OpenAI API' });
+        }
+        response.json({ summary: aiResponse.choices[0].message.content });
+      } catch (error) {
+        console.error('Error generating season summary:', error);
+        response.status(500).json({ error: 'Error generating season summary' });
       }
     });
 
@@ -348,6 +444,50 @@ class Server {
       } catch (error) {
         console.error('Error generating matchup preview:', error);
         response.status(500).json({ error: 'Error generating matchup preview' });
+      }
+    });
+
+    this.app.post('/api/chat', async (req: Request, response: Response) => {
+      try {
+        const { messages, players } = req.body;
+        if (!Array.isArray(messages) || messages.length === 0) {
+          return response.status(400).json({ error: 'Invalid messages data' });
+        }
+        const validMessages = messages.filter(
+          (m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string',
+        );
+        if (validMessages.length !== messages.length) {
+          return response.status(400).json({ error: 'Invalid messages data' });
+        }
+        if (!players || !Array.isArray(players)) {
+          return response.status(400).json({ error: 'Invalid players data' });
+        }
+
+        const validPlayers = players.filter((p: any) => p && p.id);
+        const playerIds: string[] = validPlayers.map((p: any) => p.id);
+        const state = await getSleeperState();
+        const [statsMap, injuryMap, projectionMap, defenseRankings] = await Promise.all([
+          getSeasonStatsForRoster(playerIds, state),
+          getInjuryStatuses(playerIds),
+          getProjectionsForRoster(playerIds, state),
+          getDefenseRankingsWithFallback(state),
+        ]);
+        const contextText = buildSeasonRosterContextText(validPlayers, statsMap, injuryMap, projectionMap, defenseRankings);
+
+        const aiResponse = await this.openAiClient.chat.completions.create({
+          model: 'gpt-5-mini',
+          messages: [
+            { role: 'system', content: CHAT_SYSTEM_PROMPT + contextText },
+            ...validMessages.map((m: any) => ({ role: m.role, content: m.content })),
+          ],
+        });
+        if (!aiResponse.choices || aiResponse.choices.length === 0 || !aiResponse.choices[0]?.message?.content) {
+          return response.status(500).json({ error: 'No valid response from OpenAI API' });
+        }
+        response.json({ reply: aiResponse.choices[0].message.content });
+      } catch (error) {
+        console.error('Error generating chat response:', error);
+        response.status(500).json({ error: 'Error generating chat response' });
       }
     });
 
