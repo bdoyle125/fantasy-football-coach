@@ -17,6 +17,25 @@
           class="app-header-logo"
         />
       </RouterLink>
+      <RouterLink
+        v-if="activeLeagueName"
+        v-tooltip.bottom="'Switch league'"
+        :to="{ name: 'Leagues' }"
+        class="app-active-league ms-auto"
+      >
+        <Tag
+          :value="activeLeagueName"
+          severity="secondary"
+        />
+      </RouterLink>
+      <PrimeButton
+        v-tooltip.left="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+        :icon="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+        text
+        aria-label="Toggle dark mode"
+        :class="{ 'ms-auto': !activeLeagueName }"
+        @click="toggleDarkMode"
+      />
     </header>
 
     <Drawer
@@ -60,10 +79,16 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { RouterLink } from "vue-router";
-import { Button as PrimeButton, Drawer } from "primevue";
+import { Button as PrimeButton, Drawer, Tag } from "primevue";
+import { isDarkModeActive, setDarkMode, onSystemDarkModeChange } from "../utils/darkMode";
+import { LeagueService } from "../service/LeagueService";
+import { RefreshActiveLeagueKey } from "../utils/injectionKeys";
 
 interface componentData {
   sidebarVisible: boolean;
+  isDarkMode: boolean;
+  stopWatchingSystemDarkMode: (() => void) | null;
+  activeLeagueName: string | null;
 }
 
 export default defineComponent({
@@ -72,11 +97,54 @@ export default defineComponent({
     RouterLink,
     PrimeButton,
     Drawer,
+    Tag,
+  },
+  setup() {
+    return {
+      LeagueService: new LeagueService(),
+    };
+  },
+  provide() {
+    return {
+      [RefreshActiveLeagueKey]: this.loadActiveLeague,
+    };
   },
   data(): componentData {
     return {
       sidebarVisible: false,
+      isDarkMode: isDarkModeActive(),
+      stopWatchingSystemDarkMode: null,
+      activeLeagueName: null,
     };
+  },
+  methods: {
+    toggleDarkMode() {
+      this.isDarkMode = !this.isDarkMode;
+      setDarkMode(this.isDarkMode);
+    },
+    async loadActiveLeague() {
+      try {
+        const settings = await this.LeagueService.fetchActiveLeagueSettings();
+        this.activeLeagueName = settings ? settings.leagueName || '(unnamed league)' : null;
+      } catch (error) {
+        console.error("Error loading active league:", error);
+        this.activeLeagueName = null;
+      }
+    },
+  },
+  watch: {
+    '$route.name'() {
+      this.loadActiveLeague();
+    },
+  },
+  mounted() {
+    this.stopWatchingSystemDarkMode = onSystemDarkModeChange((isDark) => {
+      this.isDarkMode = isDark;
+    });
+    this.loadActiveLeague();
+  },
+  beforeUnmount() {
+    this.stopWatchingSystemDarkMode?.();
   },
 });
 </script>
@@ -84,6 +152,15 @@ export default defineComponent({
 <style scoped>
 .app-header-logo {
   height: 36px;
+}
+
+.app-active-league {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .app-nav-link {

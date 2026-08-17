@@ -194,6 +194,7 @@ import { League, SleeperLeagueSummary } from "../types/League";
 import { DataTable, Column, Card, Tag, Button as PrimeButton, Select as PrimeSelect, InputText, Message } from "primevue";
 import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ErrorState from "../components/ErrorState.vue";
+import { RefreshActiveLeagueKey } from "../utils/injectionKeys";
 
 interface NewLeagueForm {
   provider: 'sleeper' | 'espn';
@@ -237,6 +238,9 @@ export default defineComponent({
     return {
       LeagueService: new LeagueService(),
     };
+  },
+  inject: {
+    refreshActiveLeague: { from: RefreshActiveLeagueKey, default: () => {} },
   },
   data(): componentData {
     return {
@@ -309,8 +313,15 @@ export default defineComponent({
         this.activatingLeagueId = leagueId;
         await this.LeagueService.activateLeague(leagueId);
         await this.loadLeagues();
+        this.refreshActiveLeague();
       } catch (error) {
         console.error("Error activating league:", error);
+        this.$toast.add({
+          severity: 'error',
+          summary: 'Failed to switch league',
+          detail: error instanceof Error ? error.message : undefined,
+          life: 5000,
+        });
       } finally {
         this.activatingLeagueId = null;
       }
@@ -325,6 +336,7 @@ export default defineComponent({
         this.removeError = null;
         await this.LeagueService.removeLeague(league.id);
         await this.loadLeagues();
+        this.refreshActiveLeague();
       } catch (error) {
         console.error("Error removing league:", error);
         this.removeError = "Couldn't remove that league. Try again.";
@@ -352,6 +364,7 @@ export default defineComponent({
           leagueName: '',
         };
         await this.loadLeagues();
+        this.refreshActiveLeague();
       } catch (error) {
         console.error("Error adding league:", error);
         this.addError = "Couldn't add that league. Double-check the IDs and try again.";

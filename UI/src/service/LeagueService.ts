@@ -1,6 +1,24 @@
 import { League, ActiveLeagueSettings, SleeperLeagueSummary } from "../types/League";
 
 export class LeagueService {
+    async fetchActiveLeagueSettings(): Promise<ActiveLeagueSettings | null> {
+        const api = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${api}api/settings`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (response.status === 404) {
+            return null;
+        }
+        if (!response.ok) {
+            throw new Error('Failed to fetch active league settings');
+        }
+        const data = await response.json();
+        return data;
+    }
+
     async fetchSleeperLeaguesForOwner(ownerId: string): Promise<SleeperLeagueSummary[]> {
         const api = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${api}api/leagues?ownerId=${encodeURIComponent(ownerId)}`, {
@@ -62,7 +80,8 @@ export class LeagueService {
             body: JSON.stringify({ leagueId }),
         });
         if (!response.ok) {
-            throw new Error('Failed to activate league');
+            const errorBody = await response.json().catch(() => null);
+            throw new Error(errorBody?.error || 'Failed to activate league');
         }
         const data = await response.json();
         return data;
