@@ -173,6 +173,7 @@ export default defineComponent({
 }
 
 .chat-message.assistant .chat-bubble {
-  background-color: var(--p-surface-200);
+  background-color: var(--p-content-hover-background);
+  color: var(--p-text-color);
 }
 </style>
