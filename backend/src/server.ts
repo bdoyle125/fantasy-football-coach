@@ -209,6 +209,11 @@ class Server {
           season = String(new Date().getFullYear());
         }
         const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${ownerId}/leagues/nfl/${season}`);
+        if (!leaguesRes.ok) {
+          const errorText = await leaguesRes.text();
+          console.error(`Error fetching leagues data from Sleeper API: ${leaguesRes.status} ${leaguesRes.statusText} - ${errorText}`);
+          return res.status(500).json({ error: 'Error fetching leagues data from Sleeper API' });
+        }
         const leaguesData = await leaguesRes.json();
         res.json({ leagues: leaguesData });
       } catch (error) {
