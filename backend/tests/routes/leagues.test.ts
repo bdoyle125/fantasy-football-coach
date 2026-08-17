@@ -60,10 +60,7 @@ describe('GET /api/leagues', () => {
     expect(res.body).toEqual({ error: 'Error fetching leagues data' });
   });
 
-  it('documents the existing gap: an upstream non-ok status is not checked, so it still returns 200', async () => {
-    // Known gap, not fixed this session: unlike /api/player/:playerId, this route never
-    // checks `leaguesRes.ok`, so a valid JSON error body from a failed upstream request
-    // is passed straight through as a "successful" 200 response.
+  it('returns 500 when the upstream Sleeper request responds with a non-ok status', async () => {
     mswServer.use(
       http.get('https://api.sleeper.app/v1/user/:ownerId/leagues/nfl/:season', () => {
         return HttpResponse.json({ error: 'league not found' }, { status: 500 });
@@ -72,7 +69,7 @@ describe('GET /api/leagues', () => {
 
     const res = await request(app).get('/api/leagues');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ leagues: { error: 'league not found' } });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Error fetching leagues data from Sleeper API' });
   });
 });
