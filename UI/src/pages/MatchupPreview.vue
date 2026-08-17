@@ -130,6 +130,7 @@ import { Card, Button as PrimeButton, Dialog as PrimeDialog, DataTable, Column }
 import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ErrorState from "../components/ErrorState.vue";
 import { sortPlayersByPosition } from "../utils/sortPlayersByPosition";
+import { showApiErrorToast } from "../utils/apiError";
 
 interface componentData {
   matchup: MatchupResult | null;
@@ -191,6 +192,7 @@ export default defineComponent({
         this.showPreviewDialog = true;
       } catch (error) {
         console.error("Error generating matchup preview:", error);
+        showApiErrorToast(this.$toast, "Failed to generate matchup preview", error);
       } finally {
         this.previewInProgress = false;
       }

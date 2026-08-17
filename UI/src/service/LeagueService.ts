@@ -1,4 +1,5 @@
 import { League, ActiveLeagueSettings, SleeperLeagueSummary } from "../types/League";
+import { extractApiErrorMessage } from "../utils/apiError";
 
 export class LeagueService {
     async fetchActiveLeagueSettings(): Promise<ActiveLeagueSettings | null> {
@@ -13,7 +14,7 @@ export class LeagueService {
             return null;
         }
         if (!response.ok) {
-            throw new Error('Failed to fetch active league settings');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch active league settings'));
         }
         const data = await response.json();
         return data;
@@ -28,7 +29,7 @@ export class LeagueService {
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch Sleeper leagues');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch Sleeper leagues'));
         }
         const data = await response.json();
         return data.leagues;
@@ -43,7 +44,7 @@ export class LeagueService {
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch leagues');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch leagues'));
         }
         const data = await response.json();
         return data.leagues;
@@ -64,7 +65,7 @@ export class LeagueService {
             body: JSON.stringify(input),
         });
         if (!response.ok) {
-            throw new Error('Failed to add league');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to add league'));
         }
         const data = await response.json();
         return data;
@@ -80,8 +81,7 @@ export class LeagueService {
             body: JSON.stringify({ leagueId }),
         });
         if (!response.ok) {
-            const errorBody = await response.json().catch(() => null);
-            throw new Error(errorBody?.error || 'Failed to activate league');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to activate league'));
         }
         const data = await response.json();
         return data;
@@ -93,7 +93,7 @@ export class LeagueService {
             method: 'DELETE',
         });
         if (!response.ok) {
-            throw new Error('Failed to remove league');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to remove league'));
         }
     }
 }

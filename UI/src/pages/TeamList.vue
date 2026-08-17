@@ -217,6 +217,7 @@ import { RouterLink } from "vue-router";
 import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ErrorState from "../components/ErrorState.vue";
 import { sortPlayersByPosition } from "../utils/sortPlayersByPosition";
+import { showApiErrorToast } from "../utils/apiError";
 
 interface componentData {
   myteam: Team | null;
@@ -295,6 +296,7 @@ export default defineComponent({
         this.showAnalysisDialog = true;
       } catch (error) {
         console.error("Error analyzing team:", error);
+        showApiErrorToast(this.$toast, "Failed to analyze team", error);
       } finally {
         this.analysisInProgress = false;
       }
@@ -309,6 +311,7 @@ export default defineComponent({
         this.showSeasonSummaryDialog = true;
       } catch (error) {
         console.error("Error fetching season summary:", error);
+        showApiErrorToast(this.$toast, "Failed to generate season summary", error);
       } finally {
         this.seasonSummaryInProgress = false;
       }

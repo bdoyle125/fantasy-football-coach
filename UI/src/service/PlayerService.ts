@@ -7,6 +7,7 @@ import { QuarterbackStats } from "@/types/PlayerStats/QuarterbackStats";
 import { RunningBackStats } from "@/types/PlayerStats/RunningBackStats";
 import { TightEndStats } from "@/types/PlayerStats/TightEndStats";
 import { WideReceiverStats } from "@/types/PlayerStats/WideReceiverStats";
+import { extractApiErrorMessage } from "@/utils/apiError";
 
 export class PlayerService {
 
@@ -43,7 +44,7 @@ export class PlayerService {
             },
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch player details');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to fetch player details'));
         }
         const data = await response.json();
         const playerData = data.playerData;

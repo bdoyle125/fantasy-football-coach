@@ -1,5 +1,6 @@
 import { ChatMessage } from "../types/Chat";
 import { Player } from "../../../backend/types/Player";
+import { extractApiErrorMessage } from "../utils/apiError";
 
 export class ChatService {
     async sendMessage(messages: ChatMessage[], players: Player[]): Promise<string> {
@@ -12,7 +13,7 @@ export class ChatService {
             body: JSON.stringify({ messages, players }),
         });
         if (!response.ok) {
-            throw new Error('Failed to get a response from Coach Frank');
+            throw new Error(await extractApiErrorMessage(response, 'Failed to get a response from Coach Frank'));
         }
         const data = await response.json();
         return data.reply;

@@ -21,13 +21,6 @@
           >
             No leagues added yet. Add one below to get started.
           </div>
-          <Message
-            v-if="removeError"
-            severity="error"
-            class="mb-3"
-          >
-            {{ removeError }}
-          </Message>
           <div
             v-if="leagues.length"
             class="table-responsive"
@@ -136,13 +129,6 @@
                   @click="findSleeperLeagues"
                 />
               </span>
-              <Message
-                v-if="sleeperLeaguesError"
-                severity="error"
-                class="mt-2"
-              >
-                {{ sleeperLeaguesError }}
-              </Message>
               <div
                 v-if="sleeperLeagues.length"
                 class="mt-2 col-12 col-md-6"
@@ -167,13 +153,6 @@
               </div>
             </div>
             <div class="col-12">
-              <Message
-                v-if="addError"
-                severity="error"
-                class="mb-2"
-              >
-                {{ addError }}
-              </Message>
               <PrimeButton
                 type="submit"
                 label="Add League"
@@ -191,10 +170,11 @@
 import { defineComponent } from "vue";
 import { LeagueService } from "../service/LeagueService";
 import { League, SleeperLeagueSummary } from "../types/League";
-import { DataTable, Column, Card, Tag, Button as PrimeButton, Select as PrimeSelect, InputText, Message } from "primevue";
+import { DataTable, Column, Card, Tag, Button as PrimeButton, Select as PrimeSelect, InputText } from "primevue";
 import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ErrorState from "../components/ErrorState.vue";
 import { RefreshActiveLeagueKey } from "../utils/injectionKeys";
+import { showApiErrorToast } from "../utils/apiError";
 
 interface NewLeagueForm {
   provider: 'sleeper' | 'espn';
@@ -209,14 +189,11 @@ interface componentData {
   loadError: boolean;
   activatingLeagueId: string | null;
   removingLeagueId: string | null;
-  removeError: string | null;
   newLeague: NewLeagueForm;
   addInProgress: boolean;
-  addError: string | null;
   providerOptions: string[];
   sleeperLeagues: SleeperLeagueSummary[];
   sleeperLeaguesInProgress: boolean;
-  sleeperLeaguesError: string | null;
   sleeperLeaguesFetched: boolean;
 }
 
@@ -230,7 +207,6 @@ export default defineComponent({
     PrimeButton,
     PrimeSelect,
     InputText,
-    Message,
     LoadingSpinner,
     ErrorState,
   },
@@ -249,7 +225,6 @@ export default defineComponent({
       loadError: false,
       activatingLeagueId: null,
       removingLeagueId: null,
-      removeError: null,
       newLeague: {
         provider: 'sleeper',
         providerLeagueId: '',
@@ -257,11 +232,9 @@ export default defineComponent({
         leagueName: '',
       },
       addInProgress: false,
-      addError: null,
       providerOptions: ['sleeper'],
       sleeperLeagues: [],
       sleeperLeaguesInProgress: false,
-      sleeperLeaguesError: null,
       sleeperLeaguesFetched: false,
     };
   },
@@ -269,7 +242,6 @@ export default defineComponent({
     'newLeague.providerOwnerId'() {
       this.sleeperLeagues = [];
       this.sleeperLeaguesFetched = false;
-      this.sleeperLeaguesError = null;
     },
   },
   methods: {
@@ -279,12 +251,11 @@ export default defineComponent({
       }
       try {
         this.sleeperLeaguesInProgress = true;
-        this.sleeperLeaguesError = null;
         this.sleeperLeagues = await this.LeagueService.fetchSleeperLeaguesForOwner(this.newLeague.providerOwnerId);
         this.sleeperLeaguesFetched = true;
       } catch (error) {
         console.error("Error fetching Sleeper leagues:", error);
-        this.sleeperLeaguesError = "Couldn't fetch leagues for that Owner ID.";
+        showApiErrorToast(this.$toast, "Failed to fetch Sleeper leagues", error);
       } finally {
         this.sleeperLeaguesInProgress = false;
       }
@@ -316,12 +287,7 @@ export default defineComponent({
         this.refreshActiveLeague();
       } catch (error) {
         console.error("Error activating league:", error);
-        this.$toast.add({
-          severity: 'error',
-          summary: 'Failed to switch league',
-          detail: error instanceof Error ? error.message : undefined,
-          life: 5000,
-        });
+        showApiErrorToast(this.$toast, "Failed to switch league", error);
       } finally {
         this.activatingLeagueId = null;
       }
@@ -333,13 +299,12 @@ export default defineComponent({
       }
       try {
         this.removingLeagueId = league.id;
-        this.removeError = null;
         await this.LeagueService.removeLeague(league.id);
         await this.loadLeagues();
         this.refreshActiveLeague();
       } catch (error) {
         console.error("Error removing league:", error);
-        this.removeError = "Couldn't remove that league. Try again.";
+        showApiErrorToast(this.$toast, "Failed to remove league", error);
       } finally {
         this.removingLeagueId = null;
       }
@@ -350,7 +315,6 @@ export default defineComponent({
       }
       try {
         this.addInProgress = true;
-        this.addError = null;
         await this.LeagueService.addLeague({
           provider: this.newLeague.provider,
           providerLeagueId: this.newLeague.providerLeagueId,
@@ -367,7 +331,7 @@ export default defineComponent({
         this.refreshActiveLeague();
       } catch (error) {
         console.error("Error adding league:", error);
-        this.addError = "Couldn't add that league. Double-check the IDs and try again.";
+        showApiErrorToast(this.$toast, "Failed to add league", error);
       } finally {
         this.addInProgress = false;
       }

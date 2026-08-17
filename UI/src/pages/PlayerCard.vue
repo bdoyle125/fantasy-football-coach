@@ -251,6 +251,7 @@ import { defineComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import { showApiErrorToast } from '@/utils/apiError';
 
 interface componentData {
   playerId: string | null;
@@ -465,6 +466,7 @@ export default defineComponent({
         this.showStartBenchDialog = true;
       } catch (error) {
         console.error("Error getting start/bench advice:", error);
+        showApiErrorToast(this.$toast, "Failed to get start/bench advice", error);
       } finally {
         this.startBenchInProgress = false;
       }

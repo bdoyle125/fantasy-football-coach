@@ -36,14 +36,6 @@
           </template>
         </Card>
 
-        <Message
-          v-if="sendError"
-          severity="error"
-          class="mb-2"
-        >
-          {{ sendError }}
-        </Message>
-
         <form
           class="d-flex gap-2"
           @submit.prevent="sendMessage"
@@ -72,13 +64,13 @@ import { ChatService } from "../service/ChatService";
 import { TeamService } from "../service/TeamService";
 import { ChatMessage } from "../types/Chat";
 import { Team } from "../types/Team";
-import { Card, Button as PrimeButton, InputText, Message } from "primevue";
+import { Card, Button as PrimeButton, InputText } from "primevue";
+import { showApiErrorToast } from "../utils/apiError";
 
 interface componentData {
   messages: ChatMessage[];
   draft: string;
   sendInProgress: boolean;
-  sendError: string | null;
   myteam: Team | null;
 }
 
@@ -88,7 +80,6 @@ export default defineComponent({
     Card,
     PrimeButton,
     InputText,
-    Message,
   },
   setup() {
     return {
@@ -101,7 +92,6 @@ export default defineComponent({
       messages: [],
       draft: '',
       sendInProgress: false,
-      sendError: null,
       myteam: null,
     };
   },
@@ -122,12 +112,11 @@ export default defineComponent({
       this.draft = '';
       try {
         this.sendInProgress = true;
-        this.sendError = null;
         const reply = await this.ChatService.sendMessage(this.messages, this.myteam?.players ?? []);
         this.messages.push({ role: 'assistant', content: reply });
       } catch (error) {
         console.error("Error sending chat message:", error);
-        this.sendError = "Coach Frank couldn't respond just now. Try again.";
+        showApiErrorToast(this.$toast, "Coach Frank couldn't respond", error);
       } finally {
         this.sendInProgress = false;
       }
