@@ -33,7 +33,14 @@
                       :value="playerDetail.injuryStatus"
                     />
                   </div>
-                  <div>{{ playerDetail.player.position }} &mdash; {{ playerDetail.player.team }}</div>
+                  <div v-if="positionAndTeam">{{ positionAndTeam }}</div>
+                  <div
+                    v-if="ageLabel"
+                    class="small"
+                    style="color: var(--p-text-muted-color)"
+                  >
+                    {{ ageLabel }}
+                  </div>
                 </div>
               </div>
             </template>
@@ -388,6 +395,27 @@ export default defineComponent({
         return null;
       }
       return `Showing ${detail.seasonStatsSeason} stats`;
+    },
+    positionAndTeam(): string {
+      const player = this.playerDetail?.player;
+      if (!player) {
+        return '';
+      }
+      const parts: string[] = [];
+      if (player.position) {
+        parts.push(player.position);
+      }
+      if (player.team) {
+        parts.push(player.team);
+      }
+      return parts.join(' · ');
+    },
+    ageLabel(): string | null {
+      const age = this.playerDetail?.player?.age;
+      if (typeof age !== 'number') {
+        return null;
+      }
+      return `${age} years old`;
     },
     statGroups(): Array<{ title: string; rows: Array<{ key: string; label: string; value: number | string }> }> {
       const stats = this.playerDetail?.player?.stats as Record<string, number> | undefined;
