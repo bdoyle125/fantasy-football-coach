@@ -33,7 +33,7 @@
                       :value="playerDetail.injuryStatus"
                     />
                   </div>
-                  <div>{{ positionAndTeam }}</div>
+                  <div v-if="positionAndTeam">{{ positionAndTeam }}</div>
                   <div
                     v-if="ageLabel"
                     class="small"
